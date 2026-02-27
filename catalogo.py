@@ -1,13 +1,12 @@
+import os
+import logging
 from flask import Flask, render_template, request, jsonify, Blueprint, Response
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import joinedload
 from sqlalchemy import case, func, or_, asc, desc
-from datetime import datetime
-import os
+from sqlalchemy.exc import SQLAlchemyError
 import csv
 import io
-import logging
-from sqlalchemy.exc import SQLAlchemyError
 
 # Configuração de logging
 logging.basicConfig(level=logging.INFO)
@@ -40,17 +39,15 @@ logger.info(f"URL ajustada: {app.config['SQLALCHEMY_DATABASE_URI']}")
 from models import db, Artista, Gravadora, Etiqueta, Tape, Faixa
 db.init_app(app)
 
+# === Blueprint ===
 catalogo_bp = Blueprint('catalogo', __name__)
 
-# Função auxiliar para status
 def get_status(tape):
     if tape.subiu_streaming is True:
         return 'on_stream'
     if tape.digitalizada is True:
         return 'digitalizada'
     return 'not_stream'
-
-logging.basicConfig(level=logging.INFO)
 
 # === Manipulador de exceções global ===
 @app.errorhandler(Exception)
@@ -60,7 +57,7 @@ def handle_any_exception(e):
         return jsonify({"ok": False, "error": str(e), "type": e.__class__.__name__}), 500
     return render_template("error.html", error=str(e)), 500
 
-# Rotas de visualização
+# === Rotas de visualização ===
 @catalogo_bp.route('/')
 def index():
     return render_template('index.html')
@@ -77,7 +74,6 @@ def etiquetas():
 def gravadoras():
     return render_template('gravadoras.html')
 
-# === CORREÇÃO: endpoint='tapes_list' para compatibilidade com templates ===
 @catalogo_bp.route('/tapes', endpoint='tapes_list')
 def tapes():
     return render_template('tapes.html')
@@ -101,7 +97,7 @@ def tapes_edit(tape_id):
             tipos=tipos_midia
         )
     except Exception as e:
-        app.logger.exception("Erro ao carregar edição de tape")
+        logger.exception("Erro ao carregar edição de tape")
         return render_template('error.html', error=str(e)), 500
 
 @catalogo_bp.route('/tapes/<int:tape_id>/view', endpoint='tapes_view')
@@ -119,7 +115,7 @@ def tapes_view(tape_id):
         tape.status = get_status(tape)
         return render_template('tapes_view.html', tape=tape, faixas=faixas)
     except Exception as e:
-        app.logger.exception("Erro ao carregar visualização de tape")
+        logger.exception("Erro ao carregar visualização de tape")
         return render_template('error.html', error=str(e)), 500
 
 @catalogo_bp.route('/musicas', endpoint='musicas_list')
@@ -135,7 +131,7 @@ def musicas_view(musica_id):
         ).get_or_404(musica_id)
         return render_template('musicas_view.html', musica=musica)
     except Exception as e:
-        app.logger.exception("Erro ao carregar visualização de música")
+        logger.exception("Erro ao carregar visualização de música")
         return render_template('error.html', error=str(e)), 500
 
 @catalogo_bp.route('/musicas/<int:musica_id>/edit', methods=['GET', 'POST'], endpoint='musicas_edit')
@@ -159,11 +155,10 @@ def musicas_edit(musica_id):
             return jsonify({"ok": True})
         return render_template('musicas_edit.html', musica=faixa)
     except Exception as e:
-        app.logger.exception("Erro ao editar música")
+        logger.exception("Erro ao editar música")
         return jsonify({"ok": False, "error": str(e)}), 500
 
-# ---------- ROTAS DE API ----------
-
+# === ROTAS DE API ===
 @catalogo_bp.route('/api/search_tapes')
 def api_search_tapes():
     try:
@@ -190,7 +185,6 @@ def api_search_tapes():
             query = query.filter(Tape.subiu_streaming.isnot(True))
 
         if termo:
-            # === CORREÇÃO: usar or_ (não db.or_) ===
             query = query.filter(
                 or_(
                     Tape.titulo.ilike(f'%{termo}%'),
@@ -252,10 +246,10 @@ def api_search_tapes():
             }
         })
     except SQLAlchemyError as e:
-        app.logger.exception("Erro SQLAlchemy em /api/search_tapes")
+        logger.exception("Erro SQLAlchemy em /api/search_tapes")
         return jsonify({"ok": False, "error": str(e)}), 500
     except Exception as e:
-        app.logger.exception("Erro inesperado em /api/search_tapes")
+        logger.exception("Erro inesperado em /api/search_tapes")
         return jsonify({"ok": False, "error": str(e)}), 500
 
 @catalogo_bp.route('/api/tapes/<int:tape_id>', methods=['PUT'])
@@ -379,11 +373,11 @@ def api_update_tape(tape_id):
 
     except SQLAlchemyError as e:
         db.session.rollback()
-        app.logger.exception("Erro SQLAlchemy em /api/tapes/<int:tape_id> PUT")
+        logger.exception("Erro SQLAlchemy em /api/tapes/<int:tape_id> PUT")
         return jsonify({"ok": False, "error": "Erro de banco de dados", "details": str(e)}), 500
     except Exception as e:
         db.session.rollback()
-        app.logger.exception("Erro inesperado em /api/tapes/<int:tape_id> PUT")
+        logger.exception("Erro inesperado em /api/tapes/<int:tape_id> PUT")
         return jsonify({"ok": False, "error": str(e)}), 500
 
 @catalogo_bp.route('/api/dashboard_data')
@@ -408,10 +402,10 @@ def dashboard_data():
             }
         })
     except SQLAlchemyError as e:
-        app.logger.exception("Erro SQLAlchemy em /api/dashboard_data")
+        logger.exception("Erro SQLAlchemy em /api/dashboard_data")
         return jsonify({"ok": False, "error": str(e)}), 500
     except Exception as e:
-        app.logger.exception("Erro inesperado em /api/dashboard_data")
+        logger.exception("Erro inesperado em /api/dashboard_data")
         return jsonify({"ok": False, "error": str(e)}), 500
 
 @catalogo_bp.route('/api/stats/top_artistas_faixas')
@@ -429,10 +423,10 @@ def api_top_artistas_faixas():
         data = [{'nome': r[0], 'qtd': r[1]} for r in results]
         return jsonify({"ok": True, "data": data})
     except SQLAlchemyError as e:
-        app.logger.exception("Erro SQLAlchemy em /api/stats/top_artistas_faixas")
+        logger.exception("Erro SQLAlchemy em /api/stats/top_artistas_faixas")
         return jsonify({"ok": False, "error": str(e)}), 500
     except Exception as e:
-        app.logger.exception("Erro inesperado em /api/stats/top_artistas_faixas")
+        logger.exception("Erro inesperado em /api/stats/top_artistas_faixas")
         return jsonify({"ok": False, "error": str(e)}), 500
 
 @catalogo_bp.route('/api/tapes/<int:tape_id>', methods=['GET'])
@@ -469,10 +463,10 @@ def api_get_tape(tape_id):
         }
         return jsonify({"ok": True, "data": payload})
     except SQLAlchemyError as e:
-        app.logger.exception("Erro SQLAlchemy em /api/tapes/<int:tape_id> GET")
+        logger.exception("Erro SQLAlchemy em /api/tapes/<int:tape_id> GET")
         return jsonify({"ok": False, "error": str(e)}), 500
     except Exception as e:
-        app.logger.exception("Erro inesperado em /api/tapes/<int:tape_id> GET")
+        logger.exception("Erro inesperado em /api/tapes/<int:tape_id> GET")
         return jsonify({"ok": False, "error": str(e)}), 500
 
 @catalogo_bp.route('/api/artistas', methods=['GET', 'POST'])
@@ -504,11 +498,11 @@ def api_artistas():
             return jsonify({"ok": True, "data": {'id': novo_artista.id, 'nome': novo_artista.nome}}), 201
     except SQLAlchemyError as e:
         db.session.rollback()
-        app.logger.exception("Erro SQLAlchemy em /api/artistas")
+        logger.exception("Erro SQLAlchemy em /api/artistas")
         return jsonify({"ok": False, "error": str(e)}), 500
     except Exception as e:
         db.session.rollback()
-        app.logger.exception("Erro inesperado em /api/artistas")
+        logger.exception("Erro inesperado em /api/artistas")
         return jsonify({"ok": False, "error": str(e)}), 500
 
 @catalogo_bp.route('/api/artistas/<int:id>', methods=['PUT', 'DELETE'])
@@ -526,11 +520,11 @@ def api_artista(id):
             return '', 204
     except SQLAlchemyError as e:
         db.session.rollback()
-        app.logger.exception("Erro SQLAlchemy em /api/artistas/<int:id>")
+        logger.exception("Erro SQLAlchemy em /api/artistas/<int:id>")
         return jsonify({"ok": False, "error": str(e)}), 500
     except Exception as e:
         db.session.rollback()
-        app.logger.exception("Erro inesperado em /api/artistas/<int:id>")
+        logger.exception("Erro inesperado em /api/artistas/<int:id>")
         return jsonify({"ok": False, "error": str(e)}), 500
 
 @catalogo_bp.route('/api/gravadoras', methods=['GET', 'POST'])
@@ -550,11 +544,11 @@ def api_gravadoras():
             return jsonify({"ok": True, "data": {'id': nova_gravadora.id, 'nome': nova_gravadora.nome}}), 201
     except SQLAlchemyError as e:
         db.session.rollback()
-        app.logger.exception("Erro SQLAlchemy em /api/gravadoras")
+        logger.exception("Erro SQLAlchemy em /api/gravadoras")
         return jsonify({"ok": False, "error": str(e)}), 500
     except Exception as e:
         db.session.rollback()
-        app.logger.exception("Erro inesperado em /api/gravadoras")
+        logger.exception("Erro inesperado em /api/gravadoras")
         return jsonify({"ok": False, "error": str(e)}), 500
 
 @catalogo_bp.route('/api/gravadoras/<int:id>', methods=['PUT', 'DELETE'])
@@ -572,11 +566,11 @@ def api_gravadora(id):
             return '', 204
     except SQLAlchemyError as e:
         db.session.rollback()
-        app.logger.exception("Erro SQLAlchemy em /api/gravadoras/<int:id>")
+        logger.exception("Erro SQLAlchemy em /api/gravadoras/<int:id>")
         return jsonify({"ok": False, "error": str(e)}), 500
     except Exception as e:
         db.session.rollback()
-        app.logger.exception("Erro inesperado em /api/gravadoras/<int:id>")
+        logger.exception("Erro inesperado em /api/gravadoras/<int:id>")
         return jsonify({"ok": False, "error": str(e)}), 500
 
 @catalogo_bp.route('/api/etiquetas', methods=['GET', 'POST'])
@@ -596,11 +590,11 @@ def api_etiquetas():
             return jsonify({"ok": True, "data": {'id': nova_etiqueta.id, 'nome': nova_etiqueta.nome}}), 201
     except SQLAlchemyError as e:
         db.session.rollback()
-        app.logger.exception("Erro SQLAlchemy em /api/etiquetas")
+        logger.exception("Erro SQLAlchemy em /api/etiquetas")
         return jsonify({"ok": False, "error": str(e)}), 500
     except Exception as e:
         db.session.rollback()
-        app.logger.exception("Erro inesperado em /api/etiquetas")
+        logger.exception("Erro inesperado em /api/etiquetas")
         return jsonify({"ok": False, "error": str(e)}), 500
 
 @catalogo_bp.route('/api/etiquetas/<int:id>', methods=['PUT', 'DELETE'])
@@ -618,11 +612,11 @@ def api_etiqueta(id):
             return '', 204
     except SQLAlchemyError as e:
         db.session.rollback()
-        app.logger.exception("Erro SQLAlchemy em /api/etiquetas/<int:id>")
+        logger.exception("Erro SQLAlchemy em /api/etiquetas/<int:id>")
         return jsonify({"ok": False, "error": str(e)}), 500
     except Exception as e:
         db.session.rollback()
-        app.logger.exception("Erro inesperado em /api/etiquetas/<int:id>")
+        logger.exception("Erro inesperado em /api/etiquetas/<int:id>")
         return jsonify({"ok": False, "error": str(e)}), 500
 
 def _tape_payload(t: Tape):
@@ -697,7 +691,7 @@ def api_export_tapes():
             headers={"Content-Disposition": 'attachment; filename="tapes_export.csv"'}
         )
     except Exception as e:
-        app.logger.exception("Erro ao exportar tapes")
+        logger.exception("Erro ao exportar tapes")
         return jsonify({"ok": False, "error": str(e)}), 500
 
 @catalogo_bp.route('/api/importar_catalogo', methods=['POST'])
@@ -711,10 +705,10 @@ def api_importar_catalogo():
         importar()
         return jsonify({"ok": True})
     except ImportError as e:
-        app.logger.exception("Módulo de importação não encontrado")
+        logger.exception("Módulo de importação não encontrado")
         return jsonify({"ok": False, "error": "Módulo de importação não encontrado"}), 500
     except Exception as e:
-        app.logger.exception("Erro na importação")
+        logger.exception("Erro na importação")
         return jsonify({"ok": False, "error": str(e)}), 500
 
 @catalogo_bp.route('/api/search_musicas', endpoint='api_search_musicas')
@@ -833,10 +827,10 @@ def api_search_musicas():
             }
         })
     except SQLAlchemyError as e:
-        app.logger.exception("Erro SQLAlchemy em /api/search_musicas")
+        logger.exception("Erro SQLAlchemy em /api/search_musicas")
         return jsonify({"ok": False, "error": str(e)}), 500
     except Exception as e:
-        app.logger.exception("Erro inesperado em /api/search_musicas")
+        logger.exception("Erro inesperado em /api/search_musicas")
         return jsonify({"ok": False, "error": str(e)}), 500
 
 @catalogo_bp.route('/api/musicas/<int:musica_id>', methods=['DELETE'], endpoint='api_delete_musica')
@@ -848,11 +842,11 @@ def api_delete_musica(musica_id):
         return '', 204
     except SQLAlchemyError as e:
         db.session.rollback()
-        app.logger.exception("Erro SQLAlchemy em /api/musicas/<int:musica_id> DELETE")
+        logger.exception("Erro SQLAlchemy em /api/musicas/<int:musica_id> DELETE")
         return jsonify({"ok": False, "error": str(e)}), 500
     except Exception as e:
         db.session.rollback()
-        app.logger.exception("Erro inesperado em /api/musicas/<int:musica_id> DELETE")
+        logger.exception("Erro inesperado em /api/musicas/<int:musica_id> DELETE")
         return jsonify({"ok": False, "error": str(e)}), 500
 
 @catalogo_bp.route('/api/export_musicas', endpoint='api_export_musicas')
@@ -879,12 +873,13 @@ def api_export_musicas():
             headers={"Content-Disposition": "attachment;filename=musicas.csv"}
         )
     except Exception as e:
-        app.logger.exception("Erro ao exportar músicas")
+        logger.exception("Erro ao exportar músicas")
         return jsonify({"ok": False, "error": str(e)}), 500
 
-# Registro do blueprint
+# === Registro do blueprint ===
 app.register_blueprint(catalogo_bp)
 
+# === Inicialização do banco de dados (cria tabelas se não existirem) ===
 with app.app_context():
     try:
         db.create_all()
@@ -896,6 +891,3 @@ with app.app_context():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5005))
     app.run(host='0.0.0.0', port=port, debug=False)
-
-
-
