@@ -15,24 +15,29 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-# === CORREÇÃO: Ajuste automático da DATABASE_URL ===
+# === CONFIGURAÇÃO DO BANCO DE DADOS (CORRIGIDA PARA SUPABASE) ===
 db_url = os.environ.get("DATABASE_URL", "")
+logger.info(f"DATABASE_URL original: {db_url}")
+
+# Corrige prefixo postgres:// para postgresql+psycopg2://
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql+psycopg2://", 1)
 
-# Adiciona SSL se for Supabase (ou qualquer provedor que exija SSL)
-if "supabase.com" in db_url and "sslmode=" not in db_url:
+# Se for Supabase, ajusta para porta do pooler e adiciona SSL com timeout
+if "supabase.co" in db_url:
+    # Substitui porta 5432 por 6543 (pooler do Supabase)
+    db_url = db_url.replace(":5432", ":6543")
+    # Adiciona parâmetros de conexão: SSL, timeout, keepalive
     sep = "&" if "?" in db_url else "?"
-    db_url = db_url + f"{sep}sslmode=require"
+    db_url = db_url + f"{sep}sslmode=require&connect_timeout=10&keepalives=1&keepalives_idle=30"
 
 app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev")
 
-print("DATABASE_URL ajustada:", app.config["SQLALCHEMY_DATABASE_URI"])
+logger.info(f"URL ajustada: {app.config['SQLALCHEMY_DATABASE_URI']}")
 
 from models import db, Artista, Gravadora, Etiqueta, Tape, Faixa
-
 db.init_app(app)
 
 catalogo_bp = Blueprint('catalogo', __name__)
@@ -891,5 +896,6 @@ with app.app_context():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5005))
     app.run(host='0.0.0.0', port=port, debug=False)
+
 
 
