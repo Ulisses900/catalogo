@@ -12,18 +12,19 @@ import io
 from flask import request, jsonify
 from sqlalchemy.exc import SQLAlchemyError
 
-# Importa os modelos do arquivo models.py (certifique-se de que está no mesmo diretório)
-from models import db, Artista, Gravadora, Etiqueta, Tape, Faixa
-
 app = Flask(__name__)
-
-# Configuração do banco de dados (use o mesmo caminho do seu banco)
 
 # Configuração do banco de dados (use o mesmo caminho do seu banco)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config['SECRET_KEY'] = '02236d8caf4faa926da6b83aea5b4668f0edd2131bc0025e6f95c253344c32c7'
+
+# (debug temporário)
+print("DATABASE_URL exists?", bool(os.environ.get("DATABASE_URL")))
+
+# Importa os modelos do arquivo models.py (certifique-se de que está no mesmo diretório)
+from models import db, Artista, Gravadora, Etiqueta, Tape, Faixa
 
 # Inicializa o SQLAlchemy com a aplicação (o db já vem do models.py, mas precisa ser associado ao app)
 db.init_app(app)
@@ -864,4 +865,5 @@ if __name__ == '__main__':
 
 
     app.run(host='0.0.0.0', port=5005, debug=True)
+
 
