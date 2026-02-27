@@ -9,6 +9,10 @@ import io
 import logging
 from sqlalchemy.exc import SQLAlchemyError
 
+# Configuração de logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__)
 
 # === CORREÇÃO: Ajuste automático da DATABASE_URL ===
@@ -43,13 +47,13 @@ def get_status(tape):
 
 logging.basicConfig(level=logging.INFO)
 
-# === CORREÇÃO: Manipulador de exceções que diferencia APIs de páginas ===
+# === Manipulador de exceções global ===
 @app.errorhandler(Exception)
 def handle_any_exception(e):
-    app.logger.exception("Erro não tratado:")
+    logger.exception("Erro não tratado:")
     if request.path.startswith("/api/"):
         return jsonify({"ok": False, "error": str(e), "type": e.__class__.__name__}), 500
-    return render_template('error.html', error=str(e)), 500
+    return render_template("error.html", error=str(e)), 500
 
 # Rotas de visualização
 @catalogo_bp.route('/')
@@ -876,25 +880,15 @@ def api_export_musicas():
 # Registro do blueprint
 app.register_blueprint(catalogo_bp)
 
-if __name__ == '__main__':
-    with app.app_context():
+with app.app_context():
+    try:
         db.create_all()
-        if not Artista.query.first():
-            print("Adicionando dados de exemplo...")
-            artista_ex = Artista(nome="Artista Exemplo")
-            gravadora_ex = Gravadora(nome="Gravadora Exemplo")
-            etiqueta_ex = Etiqueta(nome="Etiqueta Exemplo")
-            db.session.add_all([artista_ex, gravadora_ex, etiqueta_ex])
-            db.session.commit()
-            tape_ex = Tape(
-                titulo="Tape de Exemplo",
-                artista=artista_ex,
-                gravadora=gravadora_ex,
-                etiqueta=etiqueta_ex,
-                numero_tape="1234",
-                subiu_streaming=True
-            )
-            db.session.add(tape_ex)
-            db.session.commit()
+        logger.info("Tabelas verificadas/criadas com sucesso.")
+    except Exception as e:
+        logger.exception("Erro ao criar tabelas:")
+        # Não levanta exceção para não impedir o startup, mas loga o erro.
 
-    app.run(host='0.0.0.0', port=5005, debug=True)
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5005))
+    app.run(host='0.0.0.0', port=port, debug=False)True)
+
