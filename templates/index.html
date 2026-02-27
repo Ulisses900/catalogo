@@ -152,7 +152,7 @@
         <span class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full font-bold" id="preview-count">—</span>
       </div>
 
-      <!-- Container dos cards (substitui a tabela) -->
+      <!-- Container dos cards -->
       <div id="tapes-cards-container" class="divide-y divide-slate-50">
         <div class="p-8 text-center text-slate-400">Carregando...</div>
       </div>
@@ -188,26 +188,26 @@
     </a>
   </nav>
 
-  <!-- FLOATING ACTION BUTTON (adicionar) - temporariamente apontando para a lista -->
+  <!-- FLOATING ACTION BUTTON (adicionar) -->
   <a href="{{ url_for('catalogo.tapes_list') }}"
      class="fixed bottom-20 right-4 bg-indigo-600 text-white p-4 rounded-full shadow-lg z-20 touch-target flex items-center justify-center">
     <i class="fas fa-plus text-2xl"></i>
   </a>
 
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-  // URLs da API (mantidas do original)
+  // URLs da API
   const SEARCH_URL = "{{ url_for('catalogo.api_search_tapes') }}";
   const STATS_URL = "{{ url_for('catalogo.dashboard_data') }}";
-  const TOP_FAIXAS_URL = "/api/stats/top_artistas_faixas";
+  const TOP_FAIXAS_URL = "{{ url_for('catalogo.api_top_artistas_faixas') }}";
   const VIEW_URL_TPL = "{{ url_for('catalogo.tapes_view', tape_id=0) }}";
   const EDIT_URL_TPL = "{{ url_for('catalogo.tapes_edit', tape_id=0) }}";
 
   // Elementos DOM
   const cardsContainer = document.getElementById('tapes-cards-container');
-  const searchForm = document.getElementById('searchForm'); // não existe mais, vamos usar os campos diretamente
   const termoInput = document.getElementById('termo');
   const tipoSelect = document.getElementById('tipo_pesquisa');
   const filtroSelect = document.getElementById('filtro');
@@ -243,7 +243,7 @@
     return typeof v === 'string' ? v : (v.nome || '-');
   }
 
-  // --- Renderização dos gráficos (igual ao original) ---
+  // Renderização dos gráficos
   function renderTopArtistas(top) {
     const box = document.getElementById('chart-artistas');
     if (!box) return;
@@ -265,7 +265,6 @@
           </div>
         </div>`;
     }).join('');
-    setText('top-artistas-info', `Top ${top.length}`);
   }
 
   function renderTopArtistasFaixas(top) {
@@ -291,42 +290,57 @@
     }).join('');
   }
 
-  // --- Carregamento dos dados de resumo (KPIs e gráficos) ---
+  // Carregamento dos dados de resumo (KPIs e gráficos)
   async function carregarResumo() {
     try {
+      // KPIs
       const respStats = await fetch(STATS_URL);
       if (respStats.ok) {
-        const data = await respStats.json();
-        setText('kpi-total', data.stats.total);
-        setText('kpi-on-stream', data.stats.on_stream);
-        setText('kpi-digitalizada', data.stats.digitalizada);
+        const json = await respStats.json();
+        if (json.ok && json.data && json.data.stats) {
+          const stats = json.data.stats;
+          setText('kpi-total', stats.total);
+          setText('kpi-on-stream', stats.on_stream);
+          setText('kpi-digitalizada', stats.digitalizada);
+        } else {
+          console.error('Resposta inválida do dashboard:', json);
+        }
       }
 
       // Top artistas por tapes (via search com muitos itens)
       const respTapes = await fetch(`${SEARCH_URL}?limit=1000&filtro=todos`);
-      const dataTapes = await respTapes.json();
-      const counts = new Map();
-      dataTapes.tapes.forEach(t => {
-        const nome = (t.artista && t.artista.nome) ? t.artista.nome : 'SEM IDENTIFICAÇÃO';
-        counts.set(nome, (counts.get(nome) || 0) + 1);
-      });
-      const top = [...counts.entries()]
-        .map(([nome, qtd]) => ({ nome, qtd }))
-        .sort((a, b) => b.qtd - a.qtd)
-        .slice(0, 8);
-      renderTopArtistas(top);
+      const jsonTapes = await respTapes.json();
+      if (jsonTapes.ok && jsonTapes.data && jsonTapes.data.tapes) {
+        const counts = new Map();
+        jsonTapes.data.tapes.forEach(t => {
+          const nome = (t.artista && t.artista.nome) ? t.artista.nome : 'SEM IDENTIFICAÇÃO';
+          counts.set(nome, (counts.get(nome) || 0) + 1);
+        });
+        const top = [...counts.entries()]
+          .map(([nome, qtd]) => ({ nome, qtd }))
+          .sort((a, b) => b.qtd - a.qtd)
+          .slice(0, 8);
+        renderTopArtistas(top);
+      } else {
+        console.error('Resposta inválida de search_tapes:', jsonTapes);
+      }
 
+      // Top artistas por faixas
       const respFaixas = await fetch(TOP_FAIXAS_URL);
       if (respFaixas.ok) {
-        const dataFaixas = await respFaixas.json();
-        renderTopArtistasFaixas(dataFaixas);
+        const jsonFaixas = await respFaixas.json();
+        if (jsonFaixas.ok && jsonFaixas.data) {
+          renderTopArtistasFaixas(jsonFaixas.data);
+        } else {
+          console.error('Resposta inválida de top_artistas_faixas:', jsonFaixas);
+        }
       }
     } catch (err) {
       console.error("Erro ao carregar dashboard:", err);
     }
   }
 
-  // --- Renderização dos cards (substitui a tabela) ---
+  // Renderização dos cards (substitui a tabela)
   function renderTapesCards(tapes) {
     if (!tapes || tapes.length === 0) {
       cardsContainer.innerHTML = `<div class="p-8 text-center text-slate-400">Nenhum tape encontrado.</div>`;
@@ -366,7 +380,7 @@
     cardsContainer.innerHTML = html;
   }
 
-  // --- Carregar página com busca e filtros ---
+  // Carregar página com busca e filtros
   async function loadPage(page = 1) {
     try {
       const params = new URLSearchParams({
@@ -378,23 +392,28 @@
       });
 
       const resp = await fetch(`${SEARCH_URL}?${params.toString()}`);
-      const data = await resp.json();
+      const json = await resp.json();
 
-      renderTapesCards(data.tapes || []);
-
-      currentPage = data.pagina_atual || 1;
-      totalPages = data.total_paginas || 1;
-      currentPageSpan.textContent = currentPage;
-      totalPagesSpan.textContent = totalPages;
-      prevBtn.disabled = currentPage <= 1;
-      nextBtn.disabled = currentPage >= totalPages;
-      setText('preview-count', `${data.total_registros || 0} itens`);
+      if (json.ok && json.data) {
+        const data = json.data;
+        renderTapesCards(data.tapes || []);
+        currentPage = data.pagina_atual || 1;
+        totalPages = data.total_paginas || 1;
+        currentPageSpan.textContent = currentPage;
+        totalPagesSpan.textContent = totalPages;
+        prevBtn.disabled = currentPage <= 1;
+        nextBtn.disabled = currentPage >= totalPages;
+        setText('preview-count', `${data.total_registros || 0} itens`);
+      } else {
+        cardsContainer.innerHTML = `<div class="p-8 text-center text-rose-500 font-bold">Erro: ${json.error || 'Resposta inválida'}</div>`;
+      }
     } catch (err) {
       cardsContainer.innerHTML = `<div class="p-8 text-center text-rose-500 font-bold">Erro ao carregar dados.</div>`;
+      console.error(err);
     }
   }
 
-  // --- Event Listeners ---
+  // Event Listeners
   document.addEventListener('DOMContentLoaded', () => {
     carregarResumo();
     loadPage(1);
@@ -405,13 +424,13 @@
     filterPanel.classList.toggle('hidden');
   });
 
-  // Aplicar filtros (fecha o painel e recarrega)
+  // Aplicar filtros
   applyFilterBtn.addEventListener('click', () => {
     filterPanel.classList.add('hidden');
     loadPage(1);
   });
 
-  // Busca ao digitar (opcional: delay) - vamos usar o botão aplicar, mas também podemos acionar ao pressionar Enter
+  // Busca ao digitar (Enter)
   termoInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -426,8 +445,5 @@
   nextBtn.addEventListener('click', () => {
     if (currentPage < totalPages) loadPage(currentPage + 1);
   });
-
-  // Também recarrega quando mudar os selects (opcional, mas vamos manter pelo botão aplicar)
-  // Para consistência, não recarregar automático ao mudar select, apenas via botão.
 </script>
 {% endblock %}
