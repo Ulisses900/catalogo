@@ -41,6 +41,18 @@ def get_status(tape):
     # OFF stream quando "não pode subir" OU quando ainda não subiu (padrão)
     return 'not_stream'
 
+logging.basicConfig(level=logging.INFO)
+
+@app.errorhandler(Exception)
+def handle_any_exception(e):
+    app.logger.exception("Erro não tratado:")
+    return jsonify({
+        "ok": False,
+        "error": str(e),
+        "type": e.__class__.__name__
+    }), 500
+
+
 # Rotas de visualização (mantidas iguais, mas os templates podem precisar de ajustes)
 @catalogo_bp.route('/')
 def index():
@@ -865,6 +877,7 @@ if __name__ == '__main__':
 
 
     app.run(host='0.0.0.0', port=5005, debug=True)
+
 
 
 
