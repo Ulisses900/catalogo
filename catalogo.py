@@ -34,7 +34,6 @@ app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev")
 # Configuração de parâmetros de conexão (SSL, timeout, keepalive) via engine options
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "connect_args": {
-        "sslmode": "require",
         "connect_timeout": 10,
         "keepalives": 1,
         "keepalives_idle": 30
