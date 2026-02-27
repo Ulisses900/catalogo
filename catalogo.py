@@ -22,17 +22,24 @@ logger.info(f"DATABASE_URL original: {db_url}")
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql+psycopg2://", 1)
 
-# Se for Supabase, ajusta para porta do pooler e adiciona SSL com timeout
+# Se for Supabase, ajusta para porta do pooler (6543)
 if "supabase.co" in db_url:
-    # Substitui porta 5432 por 6543 (pooler do Supabase)
     db_url = db_url.replace(":5432", ":6543")
-    # Adiciona parâmetros de conexão: SSL, timeout, keepalive
-    sep = "&" if "?" in db_url else "?"
-    db_url = db_url + f"{sep}sslmode=require&connect_timeout=10&keepalives=1&keepalives_idle=30"
+    # Não adiciona parâmetros na URL; usaremos SQLALCHEMY_ENGINE_OPTIONS
 
 app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev")
+
+# Configuração de parâmetros de conexão (SSL, timeout, keepalive) via engine options
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "connect_args": {
+        "sslmode": "require",
+        "connect_timeout": 10,
+        "keepalives": 1,
+        "keepalives_idle": 30
+    }
+}
 
 logger.info(f"URL ajustada: {app.config['SQLALCHEMY_DATABASE_URI']}")
 
