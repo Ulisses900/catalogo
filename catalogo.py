@@ -8,31 +8,36 @@ from sqlalchemy.exc import SQLAlchemyError
 import csv
 import io
 
-# Configuração de logging
+# =========================
+# LOGGING
+# =========================
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-# === CONFIGURAÇÃO DO BANCO DE DADOS (CORRIGIDA PARA SUPABASE) ===
-db_url = os.environ.get("DATABASE_URL", "")
+# =========================
+# CONFIGURAÇÃO DO BANCO (SUPABASE + RENDER)
+# =========================
+db_url = os.environ.get("DATABASE_URL", "").strip()
 logger.info(f"DATABASE_URL original: {db_url}")
 
-# Corrige prefixo postgres:// para postgresql+psycopg2://
+# Corrige prefixo antigo (Render às vezes envia postgres://)
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql+psycopg2://", 1)
 
-# Se for Supabase, ajusta para porta do pooler (6543)
-if "supabase.co" in db_url:
-    db_url = db_url.replace(":5432", ":6543")
-    # Não adiciona parâmetros na URL; usaremos SQLALCHEMY_ENGINE_OPTIONS
+# ⚠️ NÃO trocar porta
+# ⚠️ NÃO mexer em sslmode
+# ⚠️ NÃO usar 6543
 
 app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev")
 
-# Configuração de parâmetros de conexão (SSL, timeout, keepalive) via engine options
+# Engine options (sem sslmode!)
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 300,
     "connect_args": {
         "connect_timeout": 10,
         "keepalives": 1,
@@ -40,8 +45,11 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     }
 }
 
-logger.info(f"URL ajustada: {app.config['SQLALCHEMY_DATABASE_URI']}")
+logger.info(f"URL final usada pelo SQLAlchemy: {app.config['SQLALCHEMY_DATABASE_URI']}")
 
+# =========================
+# INICIALIZAÇÃO DO DB
+# =========================
 from models import db, Artista, Gravadora, Etiqueta, Tape, Faixa
 db.init_app(app)
 
