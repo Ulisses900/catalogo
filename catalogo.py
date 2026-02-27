@@ -11,18 +11,26 @@ from sqlalchemy.exc import SQLAlchemyError
 
 app = Flask(__name__)
 
-# Configuração do banco de dados
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+# === CORREÇÃO: Ajuste automático da DATABASE_URL ===
+db_url = os.environ.get("DATABASE_URL", "")
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql+psycopg2://", 1)
+
+# Adiciona SSL se for Supabase (ou qualquer provedor que exija SSL)
+if "supabase.com" in db_url and "sslmode=" not in db_url:
+    sep = "&" if "?" in db_url else "?"
+    db_url = db_url + f"{sep}sslmode=require"
+
+app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev")
 
-print("DATABASE_URL exists?", bool(os.environ.get("DATABASE_URL")))
+print("DATABASE_URL ajustada:", app.config["SQLALCHEMY_DATABASE_URI"])
 
 from models import db, Artista, Gravadora, Etiqueta, Tape, Faixa
 
 db.init_app(app)
 
-# Blueprint
 catalogo_bp = Blueprint('catalogo', __name__)
 
 # Função auxiliar para status
@@ -35,16 +43,15 @@ def get_status(tape):
 
 logging.basicConfig(level=logging.INFO)
 
+# === CORREÇÃO: Manipulador de exceções que diferencia APIs de páginas ===
 @app.errorhandler(Exception)
 def handle_any_exception(e):
     app.logger.exception("Erro não tratado:")
-    return jsonify({
-        "ok": False,
-        "error": str(e),
-        "type": e.__class__.__name__
-    }), 500
+    if request.path.startswith("/api/"):
+        return jsonify({"ok": False, "error": str(e), "type": e.__class__.__name__}), 500
+    return render_template('error.html', error=str(e)), 500
 
-# Rotas de visualização (mantidas sem try/except, pois renderizam templates)
+# Rotas de visualização
 @catalogo_bp.route('/')
 def index():
     return render_template('index.html')
@@ -61,7 +68,8 @@ def etiquetas():
 def gravadoras():
     return render_template('gravadoras.html')
 
-@catalogo_bp.route('/tapes')
+# === CORREÇÃO: endpoint='tapes_list' para compatibilidade com templates ===
+@catalogo_bp.route('/tapes', endpoint='tapes_list')
 def tapes():
     return render_template('tapes.html')
 
@@ -72,7 +80,7 @@ def tapes_edit(tape_id):
         artistas = Artista.query.order_by(Artista.nome).all()
         gravadoras = Gravadora.query.order_by(Gravadora.nome).all()
         etiquetas = Etiqueta.query.order_by(Etiqueta.nome).all()
-        tipos_midia = []  # removido
+        tipos_midia = []
         faixas = Faixa.query.filter_by(tape_id=tape.id).order_by(Faixa.lado.asc(), Faixa.numero.asc()).all()
         return render_template(
             'tapes_edit.html',
@@ -145,7 +153,7 @@ def musicas_edit(musica_id):
         app.logger.exception("Erro ao editar música")
         return jsonify({"ok": False, "error": str(e)}), 500
 
-# ---------- ROTAS DE API (todas com try/except e JSON padronizado) ----------
+# ---------- ROTAS DE API ----------
 
 @catalogo_bp.route('/api/search_tapes')
 def api_search_tapes():
@@ -173,8 +181,9 @@ def api_search_tapes():
             query = query.filter(Tape.subiu_streaming.isnot(True))
 
         if termo:
+            # === CORREÇÃO: usar or_ (não db.or_) ===
             query = query.filter(
-                db.or_(
+                or_(
                     Tape.titulo.ilike(f'%{termo}%'),
                     Tape.numero_tape.ilike(f'%{termo}%'),
                     Artista.nome.ilike(f'%{termo}%'),
@@ -505,7 +514,7 @@ def api_artista(id):
         elif request.method == 'DELETE':
             db.session.delete(artista)
             db.session.commit()
-            return '', 204  # Sem conteúdo no sucesso
+            return '', 204
     except SQLAlchemyError as e:
         db.session.rollback()
         app.logger.exception("Erro SQLAlchemy em /api/artistas/<int:id>")
