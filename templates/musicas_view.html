@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhes da Música - {{ musica.musica }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<div class="min-h-screen bg-slate-50/50 p-4 md:p-8">
+  <div class="max-w-4xl mx-auto">
+    
+    <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <nav class="flex items-center text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">
+          <a href="{{ url_for('catalogo.index') }}" class="hover:text-indigo-600 transition">Dashboard</a>
+          <i class="fas fa-chevron-right mx-2 text-[10px]"></i>
+          <a href="/musicas" class="hover:text-indigo-600 transition">Músicas</a>
+          <i class="fas fa-chevron-right mx-2 text-[10px]"></i>
+          <span class="text-indigo-600">Detalhes</span>
+        </nav>
+        <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Ficha Técnica da Faixa</h1>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <a href="/musicas" class="px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
+          <i class="fas fa-arrow-left mr-2"></i> Voltar
+        </a>
+        <a href="{{ url_for('catalogo.musicas_edit', musica_id=musica.id) }}" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all">
+          <i class="fas fa-edit mr-2"></i> Editar
+        </a>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+      <div class="bg-gradient-to-r from-indigo-600 to-violet-700 px-8 py-10 text-white">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div>
+            <span class="px-3 py-1 bg-white/20 rounded-full text-[10px] font-extrabold uppercase tracking-widest border border-white/30">
+              Faixa #{{ musica.id }}
+            </span>
+            <h2 class="text-4xl font-black mt-4 mb-2 leading-tight">{{ musica.musica or 'Título não informado' }}</h2>
+            <p class="text-indigo-100 text-lg font-medium">
+              <i class="fas fa-microphone-alt mr-2 opacity-70"></i> 
+              {{ musica.tape.artista.nome if musica.tape and musica.tape.artista else 'Artista não identificado' }}
+            </p>
+          </div>
+          <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 text-center min-w-[120px]">
+            <span class="block text-[10px] font-bold uppercase tracking-wider text-indigo-200">Lado</span>
+            <span class="text-3xl font-black">{{ musica.lado or '-' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        <div class="space-y-6">
+          <h3 class="text-sm font-extrabold text-slate-400 uppercase tracking-widest flex items-center">
+            <i class="fas fa-info-circle mr-2 text-indigo-500"></i> Informações da Obra
+          </h3>
+          
+          <div class="grid grid-cols-1 gap-4">
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Autor / Compositor</label>
+              <p class="text-slate-900 font-bold">{{ musica.autor or '—' }}</p>
+            </div>
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+              <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">ISRC</label>
+              <p class="text-slate-900 font-mono font-bold tracking-wider">{{ musica.isrc or 'Não cadastrado' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <h3 class="text-sm font-extrabold text-slate-400 uppercase tracking-widest flex items-center">
+            <i class="fas fa-compact-disc mr-2 text-indigo-500"></i> Álbum / Tape Original
+          </h3>
+          
+          <div class="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 group">
+            <label class="block text-[10px] font-bold text-indigo-400 uppercase mb-1">Pertence ao Tape</label>
+            <a href="{{ url_for('catalogo.tapes_view', tape_id=musica.tape_id) }}" class="flex items-center justify-between group">
+               <div>
+                  <p class="text-slate-900 font-bold group-hover:text-indigo-600 transition-colors">{{ musica.tape.titulo or 'Tape Sem Título' }}</p>
+                  <p class="text-xs text-slate-500 font-medium">Nº: {{ musica.tape.numero_tape or 'N/A' }}</p>
+               </div>
+               <i class="fas fa-external-link-alt text-indigo-300 group-hover:text-indigo-600 transition-all"></i>
+            </a>
+          </div>
+
+          <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Gravadora</label>
+            <p class="text-slate-900 font-bold">{{ musica.tape.gravadora.nome if musica.tape and musica.tape.gravadora else '—' }}</p>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="px-8 py-5 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sistema de Catálogo v2.0</span>
+        <div class="flex gap-4">
+           <i class="fab fa-spotify text-slate-300"></i>
+           <i class="fab fa-itunes text-slate-300"></i>
+           <i class="fab fa-youtube text-slate-300"></i>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

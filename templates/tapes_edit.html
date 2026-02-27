@@ -1,0 +1,210 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="max-w-5xl mx-auto py-6">
+  <h1 class="text-2xl font-semibold mb-4">Editar Tape — {{ tape.titulo }}</h1>
+
+  <form id="tapeForm" class="space-y-6" onsubmit="return false;">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium mb-1">Título</label>
+        <input type="text" id="titulo" class="w-full border rounded px-3 py-2"
+               value="{{ tape.titulo|default('') }}">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Número Tape</label>
+        <input type="text" id="numero_tape" class="w-full border rounded px-3 py-2"
+               value="{{ tape.numero_tape|default('') }}">
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">Artista</label>
+        <select id="artista_id" class="w-full border rounded px-3 py-2">
+          <option value="">— Selecione —</option>
+          {% for a in artistas %}
+          <option value="{{ a.id }}" {{ 'selected' if a.id == tape.artista_id else '' }}>{{ a.nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">Gravadora</label>
+        <select id="gravadora_id" class="w-full border rounded px-3 py-2">
+          <option value="">— Selecione —</option>
+          {% for g in gravadoras %}
+          <option value="{{ g.id }}" {{ 'selected' if g.id == tape.gravadora_id else '' }}>{{ g.nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">Etiqueta</label>
+        <select id="etiqueta_id" class="w-full border rounded px-3 py-2">
+          <option value="">— Selecione —</option>
+          {% for e in etiquetas %}
+          <option value="{{ e.id }}" {{ 'selected' if e.id == tape.etiqueta_id else '' }}>{{ e.nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">Tipo de Mídia</label>
+        <select id="tipo_midia_id" class="w-full border rounded px-3 py-2">
+          <option value="">— Selecione —</option>
+          {% for t in tipos %}
+          <option value="{{ t.id }}" {{ 'selected' if t.id == tape.tipo_midia_id else '' }}>{{ t.nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <label class="inline-flex items-center">
+          <input type="checkbox" id="on_stream" class="mr-2" {% if tape.on_stream %}checked{% endif %}>
+          On Stream
+        </label>
+        <label class="inline-flex items-center">
+          <input type="checkbox" id="digitalizada" class="mr-2" {% if tape.digitalizada %}checked{% endif %}>
+          Digitalizada
+        </label>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">Status</label>
+        <input type="text" id="status" class="w-full border rounded px-3 py-2"
+               value="{{ tape.status|default('') }}">
+      </div>
+    </div>
+
+    <!-- Tabela de Faixas -->
+    <div class="mt-6">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold">Faixas</h2>
+        <button type="button" id="addFaixaBtn" class="px-3 py-2 border rounded">+ Adicionar faixa</button>
+      </div>
+
+      <div class="mt-3 overflow-x-auto">
+        <table class="min-w-full border" id="faixasTable">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="border px-2 py-1">#</th>
+              <th class="border px-2 py-1">Lado</th>
+              <th class="border px-2 py-1">Gênero</th>
+              <th class="border px-2 py-1">Título</th>
+              <th class="border px-2 py-1">Autor</th>
+              <th class="border px-2 py-1">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for f in faixas %}
+            <tr data-id="{{ f.id }}">
+              <td class="border px-2 py-1">
+                <input class="w-16 border rounded px-2 py-1" name="numero" value="{{ f.numero or '' }}">
+              </td>
+              <td class="border px-2 py-1">
+                <input class="w-16 border rounded px-2 py-1" name="lado" value="{{ f.lado or '' }}" maxlength="1" placeholder="A/B">
+              </td>
+              <td class="border px-2 py-1">
+                <input class="w-32 border rounded px-2 py-1" name="genero" value="{{ f.genero or '' }}">
+              </td>
+              <td class="border px-2 py-1">
+                <!-- Título da música => campo 'musica' -->
+                <input class="w-72 border rounded px-2 py-1" name="musica" value="{{ f.musica or '' }}">
+              </td>
+              <td class="border px-2 py-1">
+                <input class="w-72 border rounded px-2 py-1" name="autor" value="{{ f.autor or '' }}">
+              </td>
+              <td class="border px-2 py-1 text-center">
+                <button type="button" class="text-red-600 hover:underline remove-row">Remover</button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="flex gap-3 mt-6">
+      <button id="saveBtn" class="px-4 py-2 bg-blue-600 text-white rounded">Salvar</button>
+      <a href="{{ url_for('catalogo.tapes') }}" class="px-4 py-2 border rounded">Cancelar</a>
+    </div>
+  </form>
+</div>
+
+<script>
+(function() {
+  const SAVE_URL = "{{ url_for('catalogo.api_update_tape', tape_id=tape.id) }}";
+  const LIST_URL = "{{ url_for('catalogo.tapes') }}";
+
+  // adicionar faixa
+  document.getElementById('addFaixaBtn').addEventListener('click', () => {
+    const tbody = document.querySelector('#faixasTable tbody');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="border px-2 py-1"><input class="w-16 border rounded px-2 py-1" name="numero" value=""></td>
+      <td class="border px-2 py-1"><input class="w-16 border rounded px-2 py-1" name="lado" value="" maxlength="1" placeholder="A/B"></td>
+      <td class="border px-2 py-1"><input class="w-32 border rounded px-2 py-1" name="genero" value=""></td>
+      <td class="border px-2 py-1"><input class="w-72 border rounded px-2 py-1" name="musica" value=""></td>
+      <td class="border px-2 py-1"><input class="w-72 border rounded px-2 py-1" name="autor" value=""></td>
+      <td class="border px-2 py-1 text-center">
+        <button type="button" class="text-red-600 hover:underline remove-row">Remover</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // remover faixa
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-row')) {
+      e.target.closest('tr').remove();
+    }
+  });
+
+  // salvar
+  document.getElementById('saveBtn').addEventListener('click', async () => {
+    const payload = {
+      titulo: document.getElementById('titulo').value.trim(),
+      numero_tape: document.getElementById('numero_tape').value.trim(),
+      artista_id: parseInt(document.getElementById('artista_id').value || 0) || null,
+      gravadora_id: parseInt(document.getElementById('gravadora_id').value || 0) || null,
+      etiqueta_id: parseInt(document.getElementById('etiqueta_id').value || 0) || null,
+      tipo_midia_id: parseInt(document.getElementById('tipo_midia_id').value || 0) || null,
+      on_stream: document.getElementById('on_stream').checked,
+      digitalizada: document.getElementById('digitalizada').checked,
+      status: document.getElementById('status').value.trim(),
+      faixas: []
+    };
+
+    // coletar faixas (usando name=, não por índice)
+    document.querySelectorAll('#faixasTable tbody tr').forEach(tr => {
+      const idAttr = tr.getAttribute('data-id');
+      const get = name => (tr.querySelector(`input[name="${name}"]`)?.value || '').trim();
+      const lado = get('lado').toUpperCase();
+      payload.faixas.push({
+        id: idAttr ? parseInt(idAttr) : null,
+        numero: get('numero'),
+        lado: lado ? lado[0] : '',
+        genero: get('genero') || null,
+        musica: get('musica'),
+        autor: get('autor') || null,
+      });
+    });
+
+    try {
+      const resp = await fetch(SAVE_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!resp.ok) {
+        const err = await resp.text();
+        alert('Erro ao salvar: ' + err);
+        return;
+      }
+      alert('Tape atualizado com sucesso!');
+      window.location.href = LIST_URL;
+    } catch (e) {
+      alert('Falha na requisição: ' + e.message);
+    }
+  });
+})();
+</script>
+{% endblock %}

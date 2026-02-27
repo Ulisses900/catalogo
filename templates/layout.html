@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo Musical - {% block title %}{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    {% block styles %}{% endblock %}
+</head>
+<body class="bg-gray-100">
+    <div class="min-h-screen flex flex-col">
+        <header class="bg-gradient-to-r from-purple-600 to-indigo-700 text-white p-4 shadow-md">
+            <div class="container mx-auto flex justify-between items-center">
+                <h1 class="text-2xl font-bold">Catálogo Musical</h1>
+                <nav>
+                    <ul class="flex space-x-4">
+                        <li><a href="/" class="hover:underline">Dashboard</a></li>
+                        <li><a href="/tapes" class="hover:underline">Tapes</a></li>
+                        <li><a href="/artistas" class="hover:underline">Artistas</a></li>
+                        <li><a href="/gravadoras" class="hover:underline">Gravadoras</a></li>
+                        <li><a href="/etiquetas" class="hover:underline">Etiquetas</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </header>
+
+        <main class="flex-grow container mx-auto p-4">
+            {% block content %}{% endblock %}
+        </main>
+
+        <footer class="bg-gray-800 text-white p-4">
+            <div class="container mx-auto text-center">
+                <p>&copy; 2025 Catálogo Musical. Todos os direitos reservados.</p>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>
