@@ -20,7 +20,9 @@ app = Flask(__name__)
 # Configuração do banco de dados (use o mesmo caminho do seu banco)
 
 # Configuração do banco de dados (use o mesmo caminho do seu banco)
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("postgresql+psycopg2://postgres:81430212jR@db.edabpftowxcyvsmuzzdf.supabase.co:5432/postgres?sslmode")
+import os
+
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config['SECRET_KEY'] = '02236d8caf4faa926da6b83aea5b4668f0edd2131bc0025e6f95c253344c32c7'
 
@@ -860,5 +862,6 @@ if __name__ == '__main__':
             )
             db.session.add(tape_ex)
             db.session.commit()
+
 
     app.run(host='0.0.0.0', port=5005, debug=True)
