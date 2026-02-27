@@ -18,7 +18,7 @@ app = Flask(__name__)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config['SECRET_KEY'] = '02236d8caf4faa926da6b83aea5b4668f0edd2131bc0025e6f95c253344c32c7'
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev")
 
 # (debug temporário)
 print("DATABASE_URL exists?", bool(os.environ.get("DATABASE_URL")))
@@ -865,5 +865,6 @@ if __name__ == '__main__':
 
 
     app.run(host='0.0.0.0', port=5005, debug=True)
+
 
 
