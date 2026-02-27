@@ -159,6 +159,7 @@ def musicas_edit(musica_id):
         return jsonify({"ok": False, "error": str(e)}), 500
 
 # === ROTAS DE API ===
+
 @catalogo_bp.route('/api/search_tapes')
 def api_search_tapes():
     try:
