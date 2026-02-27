@@ -20,7 +20,6 @@ app = Flask(__name__)
 # Configuração do banco de dados (use o mesmo caminho do seu banco)
 
 # Configuração do banco de dados (use o mesmo caminho do seu banco)
-import os
 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -865,3 +864,4 @@ if __name__ == '__main__':
 
 
     app.run(host='0.0.0.0', port=5005, debug=True)
+
