@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Músicas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 100px); }
+    </style>
+</head>
+<body class="bg-slate-50 pb-safe">
+
+    <header class="bg-white border-b border-slate-200 px-6 pt-8 pb-6 sticky top-0 z-40">
+        <div class="flex items-center justify-between mb-4">
+            <h1 class="text-2xl font-black text-slate-900 tracking-tight">Músicas</h1>
+            <div class="bg-indigo-100 text-indigo-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase">
+                <span id="total-count">0</span> Faixas
+            </div>
+        </div>
+        
+        <div class="relative group">
+            <input type="text" id="search-input" placeholder="Buscar música, autor ou tape..."
+                   class="w-full bg-slate-100 border-none rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-indigo-500 text-sm transition-all">
+            <i class="fas fa-search absolute left-4 top-4.5 text-slate-400 group-focus-within:text-indigo-500"></i>
+        </div>
+    </header>
+
+    <main class="px-4 py-6">
+        <div id="musicas-container" class="grid gap-4">
+            <div class="p-20 text-center text-slate-400 italic">Carregando músicas...</div>
+        </div>
+    </main>
+
+    <div class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-100 px-6 py-4 flex items-center justify-between z-50">
+        <button id="prev-btn" class="w-12 h-12 rounded-2xl border border-slate-200 flex items-center justify-center disabled:opacity-30">
+            <i class="fas fa-chevron-left text-slate-600"></i>
+        </button>
+        <div class="text-center">
+            <span class="text-[10px] font-black text-slate-400 uppercase block">Página</span>
+            <span id="page-info" class="text-sm font-bold text-slate-900">1 / 1</span>
+        </div>
+        <button id="next-btn" class="w-12 h-12 rounded-2xl border border-slate-200 flex items-center justify-center disabled:opacity-30">
+            <i class="fas fa-chevron-right text-slate-600"></i>
+        </button>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://edabpftowxcyvsmuzzdf.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentPage = 1;
+        const limit = 15;
+
+        async function carregarMusicas() {
+            const container = document.getElementById('musicas-container');
+            const termo = document.getElementById('search-input').value;
+
+            try {
+                // Query buscando música e o título da tape relacionada
+                let query = supabaseClient
+                    .from('faixas')
+                    .select('*, tapes(titulo, numero_tape)', { count: 'exact' });
+
+                if (termo) {
+                    query = query.ilike('musica', `%${termo}%`);
+                }
+
+                const { data, count, error } = await query
+                    .order('id', { ascending: false })
+                    .range((currentPage - 1) * limit, currentPage * limit - 1);
+
+                if (error) throw error;
+
+                document.getElementById('total-count').innerText = count;
+                const totalPages = Math.ceil(count / limit);
+                document.getElementById('page-info').innerText = `${currentPage} / ${totalPages}`;
+                document.getElementById('prev-btn').disabled = currentPage <= 1;
+                document.getElementById('next-btn').disabled = currentPage >= totalPages;
+
+                if (data.length === 0) {
+                    container.innerHTML = '<p class="text-center py-20 text-slate-400">Nenhuma música encontrada.</p>';
+                    return;
+                }
+
+                container.innerHTML = data.map(m => `
+                    <div class="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm active:scale-[0.98] transition-transform">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex-1">
+                                <h3 class="font-black text-slate-900 leading-tight mb-1 text-base uppercase">${m.musica || 'SEM TÍTULO'}</h3>
+                                <p class="text-xs font-bold text-indigo-600 uppercase tracking-tight">${m.autor || 'Autor Desconhecido'}</p>
+                            </div>
+                            <span class="bg-slate-50 text-slate-400 text-[9px] font-bold px-2 py-1 rounded-lg">#${m.id}</span>
+                        </div>
+
+                        <div class="flex items-center gap-3 py-3 border-t border-slate-50 mb-3">
+                            <div class="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-500 text-xs font-black">
+                                ${m.lado || '-'}
+                            </div>
+                            <div class="flex-1 overflow-hidden">
+                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pertence à Tape</p>
+                                <p class="text-xs font-bold text-slate-700 truncate">${m.tapes?.titulo || 'Tape N/A'}</p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <a href="musicas_view.html?id=${m.id}" class="flex-1 bg-slate-900 text-white text-[11px] font-black py-3 rounded-2xl text-center">VER DETALHES</a>
+                            <a href="editar.html?id=${m.tape_id}" class="w-12 bg-indigo-50 text-indigo-600 flex items-center justify-center rounded-2xl">
+                                <i class="fas fa-compact-disc"></i>
+                            </a>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                container.innerHTML = `<p class="text-red-500 text-center py-10">Erro: ${err.message}</p>`;
+            }
+        }
+
+        // Eventos
+        let timer;
+        document.getElementById('search-input').oninput = () => {
+            clearTimeout(timer);
+            timer = setTimeout(() => { currentPage = 1; carregarMusicas(); }, 500);
+        };
+
+        document.getElementById('prev-btn').onclick = () => { currentPage--; carregarMusicas(); window.scrollTo(0,0); };
+        document.getElementById('next-btn').onclick = () => { currentPage++; carregarMusicas(); window.scrollTo(0,0); };
+
+        carregarMusicas();
+    </script>
+</body>
+</html>
