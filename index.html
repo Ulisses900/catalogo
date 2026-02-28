@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Catálogo de Tapes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        .card-hover:hover { transform: translateY(-2px); transition: all 0.2s; }
+    </style>
+</head>
+<body class="bg-slate-900 text-white p-4 md:p-6 font-sans">
+
+<div class="max-w-7xl mx-auto">
+    <!-- Cabeçalho com saudação -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl md:text-3xl font-bold">Olá, Ulisses 👋</h1>
+            <p class="text-slate-400 text-sm">Bem-vindo ao seu catálogo de tapes</p>
+        </div>
+        <div class="bg-indigo-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg shadow-indigo-800/50">
+            <span id="total-tapes">0</span> tapes no acervo
+        </div>
+    </div>
+
+    <!-- Navegação rápida (cards) -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+        <a href="index.html" class="bg-slate-800 p-4 rounded-2xl text-center font-semibold hover:bg-indigo-700 transition card-hover border border-slate-700">
+            <i class="fas fa-home text-indigo-400 text-xl mb-1"></i>
+            <div class="text-sm">Dashboard</div>
+        </a>
+        <a href="tapes.html" class="bg-slate-800 p-4 rounded-2xl text-center font-semibold hover:bg-indigo-700 transition card-hover border border-slate-700">
+            <i class="fas fa-cassette text-indigo-400 text-xl mb-1"></i>
+            <div class="text-sm">Tapes</div>
+        </a>
+        <a href="musicas.html" class="bg-slate-800 p-4 rounded-2xl text-center font-semibold hover:bg-indigo-700 transition card-hover border border-slate-700">
+            <i class="fas fa-music text-indigo-400 text-xl mb-1"></i>
+            <div class="text-sm">Músicas</div>
+        </a>
+        <a href="artistas.html" class="bg-slate-800 p-4 rounded-2xl text-center font-semibold hover:bg-indigo-700 transition card-hover border border-slate-700">
+            <i class="fas fa-microphone text-indigo-400 text-xl mb-1"></i>
+            <div class="text-sm">Artistas</div>
+        </a>
+        <a href="gravadoras.html" class="bg-slate-800 p-4 rounded-2xl text-center font-semibold hover:bg-indigo-700 transition card-hover border border-slate-700">
+            <i class="fas fa-building text-indigo-400 text-xl mb-1"></i>
+            <div class="text-sm">Gravadoras</div>
+        </a>
+    </div>
+
+    <!-- Cards de estatísticas -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700">
+            <div class="text-slate-400 text-xs uppercase">Total Tapes</div>
+            <div class="text-2xl font-bold" id="stat-tapes">0</div>
+        </div>
+        <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700">
+            <div class="text-slate-400 text-xs uppercase">Artistas</div>
+            <div class="text-2xl font-bold" id="stat-artistas">0</div>
+        </div>
+        <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700">
+            <div class="text-slate-400 text-xs uppercase">Gravadoras</div>
+            <div class="text-2xl font-bold" id="stat-gravadoras">0</div>
+        </div>
+        <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700">
+            <div class="text-slate-400 text-xs uppercase">Faixas</div>
+            <div class="text-2xl font-bold" id="stat-faixas">0</div>
+        </div>
+    </div>
+
+    <!-- Grid principal: preview e gráficos -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Últimos 5 tapes -->
+        <div class="bg-slate-800 rounded-2xl p-5 border border-slate-700">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="font-semibold text-lg"><i class="fas fa-clock mr-2 text-indigo-400"></i>Últimos 5 Tapes</h2>
+                <a href="tapes.html" class="text-xs text-indigo-400 hover:underline">Ver todos →</a>
+            </div>
+            <div id="previewTapes" class="space-y-3">
+                <!-- Será preenchido via JS -->
+                <div class="text-slate-500 text-center py-4">Carregando...</div>
+            </div>
+        </div>
+
+        <!-- Top 5 artistas com mais tapes -->
+        <div class="bg-slate-800 rounded-2xl p-5 border border-slate-700">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="font-semibold text-lg"><i class="fas fa-star mr-2 text-indigo-400"></i>Top 5 Artistas</h2>
+                <a href="artistas.html" class="text-xs text-indigo-400 hover:underline">Ver todos →</a>
+            </div>
+            <div id="topArtistas" class="space-y-3">
+                <div class="text-slate-500 text-center py-4">Carregando...</div>
+            </div>
+        </div>
+
+        <!-- Gráfico: Status dos Tapes -->
+        <div class="bg-slate-800 rounded-2xl p-5 border border-slate-700">
+            <h2 class="font-semibold text-lg mb-4"><i class="fas fa-chart-pie mr-2 text-indigo-400"></i>Status dos Tapes</h2>
+            <canvas id="graficoStatus" class="w-full h-48"></canvas>
+        </div>
+
+        <!-- Gráfico: Tapes por Ano (opcional) -->
+        <div class="bg-slate-800 rounded-2xl p-5 border border-slate-700">
+            <h2 class="font-semibold text-lg mb-4"><i class="fas fa-calendar mr-2 text-indigo-400"></i>Tapes por Ano</h2>
+            <canvas id="graficoAno" class="w-full h-48"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Configuração do Supabase (substitua com suas credenciais)
+    const SUPABASE_URL = 'https://edabpftowxcyvsmuzzdf.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Função para carregar estatísticas gerais
+    async function carregarEstatisticas() {
+        try {
+            const [tapesRes, artistasRes, gravadorasRes, faixasRes] = await Promise.all([
+                supabaseClient.from('tapes').select('*', { count: 'exact', head: true }),
+                supabaseClient.from('artistas').select('*', { count: 'exact', head: true }),
+                supabaseClient.from('gravadoras').select('*', { count: 'exact', head: true }),
+                supabaseClient.from('faixas').select('*', { count: 'exact', head: true }) // se for 'falcas', ajuste aqui
+            ]);
+
+            document.getElementById('stat-tapes').textContent = tapesRes.count || 0;
+            document.getElementById('stat-artistas').textContent = artistasRes.count || 0;
+            document.getElementById('stat-gravadoras').textContent = gravadorasRes.count || 0;
+            document.getElementById('stat-faixas').textContent = faixasRes.count || 0;
+            document.getElementById('total-tapes').textContent = tapesRes.count || 0;
+        } catch (err) {
+            console.error('Erro ao carregar estatísticas:', err);
+        }
+    }
+
+    // Carregar últimos 5 tapes com artista e gravadora
+    async function carregarUltimosTapes() {
+        try {
+            const { data, error } = await supabaseClient
+                .from('tapes')
+                .select(`
+                    id,
+                    titulo,
+                    numero_tape,
+                    artistas ( nome ),
+                    gravadoras ( nome )
+                `)
+                .order('id', { ascending: false })
+                .limit(5);
+
+            if (error) throw error;
+
+            const container = document.getElementById('previewTapes');
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div class="text-slate-500 text-center py-4">Nenhum tape encontrado.</div>';
+                return;
+            }
+
+            container.innerHTML = data.map(tape => `
+                <div class="flex items-center justify-between border-b border-slate-700 pb-2 last:border-0">
+                    <div>
+                        <div class="font-medium">${tape.titulo || 'Sem título'}</div>
+                        <div class="text-xs text-slate-400">
+                            ${tape.artistas?.nome || 'Artista desconhecido'} 
+                            ${tape.gravadoras?.nome ? '• ' + tape.gravadoras.nome : ''}
+                        </div>
+                    </div>
+                    <a href="ver.html?id=${tape.id}" class="text-indigo-400 text-sm hover:underline">
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            `).join('');
+        } catch (err) {
+            console.error('Erro ao carregar últimos tapes:', err);
+            document.getElementById('previewTapes').innerHTML = '<div class="text-red-400 text-center py-4">Erro ao carregar.</div>';
+        }
+    }
+
+    // Top 5 artistas com mais tapes
+    async function carregarTopArtistas() {
+        try {
+            // Esta query agrupa por artista_id e conta, depois busca o nome do artista
+            const { data, error } = await supabaseClient
+                .from('tapes')
+                .select('artista_id, artistas ( nome )')
+                .not('artista_id', 'is', null);
+
+            if (error) throw error;
+
+            // Contar ocorrências por artista
+            const contagem = {};
+            data.forEach(item => {
+                const artistaId = item.artista_id;
+                const nome = item.artistas?.nome || 'Desconhecido';
+                if (!contagem[artistaId]) {
+                    contagem[artistaId] = { nome, count: 0 };
+                }
+                contagem[artistaId].count++;
+            });
+
+            const ranking = Object.values(contagem)
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 5);
+
+            const container = document.getElementById('topArtistas');
+            if (ranking.length === 0) {
+                container.innerHTML = '<div class="text-slate-500 text-center py-4">Nenhum artista com tapes.</div>';
+                return;
+            }
+
+            container.innerHTML = ranking.map((item, idx) => `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-slate-400 text-sm">${idx+1}.</span>
+                        <span class="font-medium">${item.nome}</span>
+                    </div>
+                    <span class="bg-indigo-600/30 text-indigo-300 text-xs px-2 py-1 rounded-full">${item.count} tapes</span>
+                </div>
+            `).join('');
+        } catch (err) {
+            console.error('Erro ao carregar top artistas:', err);
+            document.getElementById('topArtistas').innerHTML = '<div class="text-red-400 text-center py-4">Erro ao carregar.</div>';
+        }
+    }
+
+    // Gráfico de Status
+    async function carregarGraficoStatus() {
+        try {
+            const { data, error } = await supabaseClient
+                .from('tapes')
+                .select('status');
+
+            if (error) throw error;
+
+            const statusCount = {
+                'on_stream': 0,
+                'not_stream': 0,
+                'digitalizada': 0,
+                'nao_subiu': 0,
+                'outros': 0
+            };
+
+            data.forEach(t => {
+                const s = t.status;
+                if (statusCount.hasOwnProperty(s)) statusCount[s]++;
+                else statusCount['outros']++;
+            });
+
+            const ctx = document.getElementById('graficoStatus').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['On Stream', 'Restrito', 'Digitalizada', 'Pendente', 'Outros'],
+                    datasets: [{
+                        data: [
+                            statusCount.on_stream,
+                            statusCount.not_stream,
+                            statusCount.digitalizada,
+                            statusCount.nao_subiu,
+                            statusCount.outros
+                        ],
+                        backgroundColor: ['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#6b7280'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#fff', font: { size: 10 } } }
+                    }
+                }
+            });
+        } catch (err) {
+            console.error('Erro ao carregar gráfico de status:', err);
+        }
+    }
+
+    // Gráfico de Tapes por Ano
+    async function carregarGraficoAno() {
+        try {
+            const { data, error } = await supabaseClient
+                .from('tapes')
+                .select('ano')
+                .not('ano', 'is', null);
+
+            if (error) throw error;
+
+            const anos = {};
+            data.forEach(t => {
+                if (t.ano) anos[t.ano] = (anos[t.ano] || 0) + 1;
+            });
+
+            const sortedAnos = Object.keys(anos).sort();
+            const ctx = document.getElementById('graficoAno').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedAnos,
+                    datasets: [{
+                        label: 'Quantidade',
+                        data: sortedAnos.map(a => anos[a]),
+                        backgroundColor: '#818cf8',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#334155' }, ticks: { color: '#cbd5e1' } },
+                        x: { ticks: { color: '#cbd5e1' } }
+                    }
+                }
+            });
+        } catch (err) {
+            console.error('Erro ao carregar gráfico por ano:', err);
+        }
+    }
+
+    // Inicializar tudo
+    (async () => {
+        await carregarEstatisticas();
+        await carregarUltimosTapes();
+        await carregarTopArtistas();
+        await carregarGraficoStatus();
+        await carregarGraficoAno();
+    })();
+</script>
+</body>
+</html>
