@@ -3,238 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Catálogo de Tapes</title>
+    <title>Catálogo de Tapes Pro</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
-        body { background-color: #f8fafc; min-height: 100vh; }
-        .touch-target { min-height: 44px; min-width: 44px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+        body { background-color: #f8fafc; color: #1e293b; }
         .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 120px); }
-        .bottom-nav-shadow { box-shadow: 0 -4px 12px rgba(0,0,0,0.05); }
-        
-        /* Custom Checkbox */
-        .card-checkbox {
-            appearance: none; -webkit-appearance: none; width: 24px; height: 24px;
-            border: 2px solid #cbd5e1; border-radius: 8px; background: white;
-            cursor: pointer; transition: all 0.2s; flex-shrink: 0;
-        }
-        .card-checkbox:checked {
-            background: #4f46e5; border-color: #4f46e5;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z'/%3E%3C/svg%3E");
-            background-size: 16px; background-position: center; background-repeat: no-repeat;
-        }
-        
-        .breadcrumb { display: flex; align-items: center; font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
-        .breadcrumb span:last-child { color: #4f46e5; }
-        .breadcrumb i { font-size: 8px; margin: 0 0.5rem; }
+        .card-shadow { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02); }
     </style>
 </head>
 <body>
 
-<div class="min-h-screen bg-slate-50/50 pb-safe">
-    <header class="bg-white border-b border-slate-200 px-4 pt-6 pb-4 sticky top-0 z-40">
-        <div class="breadcrumb">
-            <span>Dashboard</span>
-            <i class="fas fa-chevron-right"></i>
-            <span>Catálogo de Tapes</span>
-        </div>
-        <div class="flex items-center justify-between">
-            <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Acervo</h1>
-            <div class="flex gap-2">
-                <button onclick="exportarSelecionados()" class="bg-white border border-slate-200 text-slate-700 p-3 rounded-xl touch-target shadow-sm active:bg-slate-50">
-                    <i class="fas fa-file-export text-lg"></i>
-                </button>
-                <button onclick="exportarTudo()" class="bg-indigo-600 text-white p-3 rounded-xl touch-target shadow-lg shadow-indigo-200 active:bg-indigo-700">
-                    <i class="fas fa-download text-lg"></i>
-                </button>
+<div class="min-h-screen pb-safe">
+    <header class="bg-white border-b border-slate-200 px-6 pt-8 pb-6 sticky top-0 z-40">
+        <div class="flex items-center justify-between mb-4">
+            <h1 class="text-2xl font-black tracking-tight text-slate-900">Meu Acervo</h1>
+            <div class="bg-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg shadow-indigo-200">
+                <span id="total-records">0</span> TAPES
             </div>
+        </div>
+        
+        <div class="relative">
+            <input type="text" id="search-input" placeholder="Buscar título ou artista..."
+                   class="w-full bg-slate-100 border-none rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-indigo-500 text-base transition-all">
+            <i class="fas fa-search absolute left-4 top-5 text-slate-400"></i>
         </div>
     </header>
 
-    <div class="px-4 pt-4">
-        <div class="flex items-center gap-2">
-            <div class="relative flex-1">
-                <input type="text" id="search-input" placeholder="Buscar título, artista..."
-                       class="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base shadow-sm">
-                <i class="fas fa-search absolute left-3 top-3.5 text-slate-400"></i>
-            </div>
-            <button id="toggleFilterBtn" class="bg-white border border-slate-200 text-slate-600 p-3 rounded-xl touch-target shadow-sm">
-                <i class="fas fa-sliders-h text-lg"></i>
-            </button>
-        </div>
-
-        <div id="filterPanel" class="mt-3 hidden bg-white p-4 rounded-xl border border-slate-200 shadow-md">
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-xs font-bold mb-1 text-slate-500 uppercase tracking-wider">Status</label>
-                    <select id="status-filter" class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-2 text-sm focus:ring-2 focus:ring-indigo-500">
-                        <option value="todos">Todos</option>
-                        <option value="not_stream">⚪ Off Stream</option>
-                        <option value="on_stream">🟢 On Stream</option>
-                        <option value="digitalizada">🔵 Digitalizada</option>
-                        <option value="nao_pode_subir">🔴 Não pode subir</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold mb-1 text-slate-500 uppercase tracking-wider">Ordenar</label>
-                    <select id="sort-select" class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-2 text-sm">
-                        <option value="id_desc">ID (Recente)</option>
-                        <option value="id_asc">ID (Antigo)</option>
-                        <option value="titulo_asc">Título (A-Z)</option>
-                        <option value="artista_asc">Artista (A-Z)</option>
-                    </select>
-                </div>
-            </div>
-            <button id="applyFilterBtn" class="w-full mt-4 bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-md active:scale-[0.98] transition-transform">
-                Aplicar Filtros
-            </button>
-        </div>
-    </div>
-
-    <main class="px-4 pt-4">
-        <div id="tapes-cards-container" class="space-y-3">
-            <div class="p-8 text-center text-slate-400">Carregando acervo...</div>
+    <main class="px-4 pt-6">
+        <div id="tapes-cards-container" class="grid gap-4">
+            <div class="p-20 text-center text-slate-400 italic">Carregando catálogo...</div>
         </div>
     </main>
 
-    <div class="fixed bottom-16 left-0 right-0 bg-white border-t border-slate-200 px-6 py-3 flex items-center justify-between shadow-lg z-10">
-        <button id="prev-page" class="p-2 px-4 rounded-lg border border-slate-200 text-slate-600 disabled:opacity-30 touch-target font-bold">
-            <i class="fas fa-chevron-left mr-1"></i> Ant
+    <!-- Paginação (escondida quando não há registros) -->
+    <div id="pagination-bar" class="fixed bottom-16 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-100 px-6 py-4 flex items-center justify-between z-10">
+        <button id="prev-page" aria-label="Página anterior" class="w-12 h-12 rounded-2xl border border-slate-200 flex items-center justify-center disabled:opacity-20 active:bg-slate-50">
+            <i class="fas fa-chevron-left text-slate-600"></i>
         </button>
-        <span class="text-sm font-medium text-slate-500">
-            Pág. <span id="current-page" class="text-slate-900 font-bold">1</span> de <span id="total-pages" class="text-slate-900 font-bold">1</span>
-        </span>
-        <button id="next-page" class="p-2 px-4 rounded-lg border border-slate-200 text-slate-600 disabled:opacity-30 touch-target font-bold">
-            Prox <i class="fas fa-chevron-right ml-1"></i>
+        <div class="text-center">
+            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Página</span>
+            <span class="text-sm font-bold text-slate-900"><span id="current-page">1</span> / <span id="total-pages">1</span></span>
+        </div>
+        <button id="next-page" aria-label="Próxima página" class="w-12 h-12 rounded-2xl border border-slate-200 flex items-center justify-center disabled:opacity-20 active:bg-slate-50">
+            <i class="fas fa-chevron-right text-slate-600"></i>
         </button>
     </div>
 
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center py-2 bottom-nav-shadow z-20">
-        <a href="#" class="flex flex-col items-center text-slate-400">
-            <i class="fas fa-chart-pie text-xl"></i>
-            <span class="text-[10px] font-bold mt-1">Dashboard</span>
-        </a>
-        <a href="#" class="flex flex-col items-center text-indigo-600">
-            <i class="fas fa-layer-group text-xl"></i>
-            <span class="text-[10px] font-bold mt-1">Catálogo</span>
-        </a>
-        <a href="#" class="flex flex-col items-center text-slate-400">
-            <i class="fas fa-file-alt text-xl"></i>
-            <span class="text-[10px] font-bold mt-1">Relatórios</span>
-        </a>
-    </nav>
-
-    <a href="adicionar.html" class="fixed bottom-28 right-4 bg-indigo-600 text-white w-14 h-14 rounded-full shadow-2xl z-30 flex items-center justify-center active:scale-90 transition-transform">
+    <a href="adicionar.html" aria-label="Adicionar novo tape" class="fixed bottom-32 right-6 bg-indigo-600 text-white w-14 h-14 rounded-2xl shadow-xl flex items-center justify-center active:scale-90 transition-transform z-30">
         <i class="fas fa-plus text-xl"></i>
     </a>
 </div>
 
 <script>
-    // Configurações Supabase
+    // ATENÇÃO: Esta chave anônima é segura apenas se as políticas de segurança (RLS) estiverem ativas no Supabase.
+    // Verifique se as tabelas têm RLS configurado para restringir acesso a dados não autorizados.
     const SUPABASE_URL = 'https://edabpftowxcyvsmuzzdf.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
-    
-    // Inicialização correta (V2)
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Estado
     let currentPage = 1;
-    let totalPages = 1;
     const limit = 10;
-    let currentData = [];
-    let selectedIds = new Set();
-
-    // Elementos
-    const cardsContainer = document.getElementById('tapes-cards-container');
-    const searchInput = document.getElementById('search-input');
-    const statusFilter = document.getElementById('status-filter');
-    const sortSelect = document.getElementById('sort-select');
-    const filterPanel = document.getElementById('filterPanel');
+    let totalPages = 1;
 
     async function carregarTapes() {
-        cardsContainer.innerHTML = '<div class="p-12 text-center text-slate-400 animate-pulse"><i class="fas fa-spinner fa-spin text-2xl mb-2"></i><br>Buscando dados...</div>';
-
+        const container = document.getElementById('tapes-cards-container');
+        
         try {
-            const termo = searchInput.value.trim();
-            const status = statusFilter.value;
-            const [col, order] = sortSelect.value.split('_');
+            const termo = document.getElementById('search-input').value.trim();
 
+            // Montagem da query base
             let query = supabaseClient
                 .from('tapes')
-                .select('*', { count: 'exact' });
+                .select(`
+                    *,
+                    artistas ( nome ),
+                    gravadoras ( nome )
+                `, { count: 'exact' });
 
-            // Filtro de Busca
+            // Busca por título ou nome do artista
             if (termo) {
-                query = query.or(`titulo.ilike.%${termo}%,artista.ilike.%${termo}%`);
-            }
+                // Primeiro, obtém IDs de artistas que correspondem ao termo
+                const { data: artistMatches, error: artistError } = await supabaseClient
+                    .from('artistas')
+                    .select('id')
+                    .ilike('nome', `%${termo}%`);
 
-            // Filtro de Status
-            if (status !== 'todos') {
-                if (status === 'on_stream') query = query.eq('subiu_streaming', true);
-                else if (status === 'digitalizada') query = query.eq('digitalizada', true);
-                else if (status === 'nao_pode_subir') query = query.eq('nao_pode_subir', true);
-                else if (status === 'not_stream') {
-                    query = query.eq('subiu_streaming', false).eq('digitalizada', false).eq('nao_pode_subir', false);
+                if (artistError) throw artistError;
+
+                const artistIds = artistMatches.map(a => a.id);
+
+                if (artistIds.length > 0) {
+                    // Filtra por título ou por artista_id na lista de IDs encontrados
+                    query = query.or(`titulo.ilike.%${termo}%,artista_id.in.(${artistIds.join(',')})`);
+                } else {
+                    // Apenas busca por título
+                    query = query.ilike('titulo', `%${termo}%`);
                 }
             }
 
-            // Ordenação e Paginação
+            // Executa a consulta com paginação
             const { data, error, count } = await query
-                .order(col, { ascending: order === 'asc' })
+                .order('titulo', { ascending: true }) // ordenação mais amigável
                 .range((currentPage - 1) * limit, currentPage * limit - 1);
 
             if (error) throw error;
 
-            currentData = data || [];
-            totalPages = Math.ceil((count || 0) / limit);
+            // Atualiza contador total
+            document.getElementById('total-records').textContent = count || 0;
+
+            // Calcula total de páginas (0 se não houver registros)
+            totalPages = count > 0 ? Math.ceil(count / limit) : 0;
             
-            atualizarInterfacePagina(count);
-            renderCards(currentData);
+            atualizarInterface();
+            renderizarCards(data || []);
 
         } catch (err) {
-            console.error('Erro:', err);
-            cardsContainer.innerHTML = `<div class="p-8 text-center text-red-500 font-bold">Erro ao carregar: ${err.message}</div>`;
+            console.error(err);
+            container.innerHTML = `<div class="p-8 text-red-500 font-bold text-center">Ops! Não foi possível carregar os dados. Tente novamente mais tarde.</div>`;
         }
     }
 
-    function renderCards(tapes) {
-        if (tapes.length === 0) {
-            cardsContainer.innerHTML = '<div class="p-12 text-center text-slate-400 italic">Nenhum resultado encontrado.</div>';
+    function renderizarCards(tapes) {
+        const container = document.getElementById('tapes-cards-container');
+        if (!tapes || tapes.length === 0) {
+            container.innerHTML = '<div class="p-20 text-center text-slate-400">Nenhum resultado encontrado.</div>';
             return;
         }
 
-        cardsContainer.innerHTML = tapes.map(t => {
-            const status = getStatusBadge(t);
+        container.innerHTML = tapes.map(t => {
+            // Fallback para "Desconhecido" quando não há artista/gravadora
+            const nomeArtista = t.artistas?.nome || 'Desconhecido';
+            const nomeGravadora = t.gravadoras?.nome || 'Desconhecida';
+
             return `
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 transition-all active:bg-slate-50">
-                    <div class="flex items-start gap-3">
-                        <input type="checkbox" class="card-checkbox" value="${t.id}" ${selectedIds.has(String(t.id)) ? 'checked' : ''} onchange="toggleSelect('${t.id}')">
-                        <div class="flex-1 min-w-0">
-                            <div class="flex justify-between items-start gap-2">
-                                <div class="truncate">
-                                    <h3 class="text-base font-bold text-slate-900 truncate">${t.titulo || 'Sem título'}</h3>
-                                    <p class="text-sm text-slate-500 truncate">${t.artista || 'Artista desconhecido'}</p>
-                                </div>
-                                <span class="px-2 py-1 rounded-md text-[10px] font-bold border ${status.cls} whitespace-nowrap">
-                                    ${status.txt}
-                                </span>
+                <div class="bg-white rounded-[2rem] p-6 border border-slate-100 card-shadow">
+                    <div class="flex flex-col gap-4">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <h3 class="text-lg font-black text-slate-900 leading-none mb-1">${t.titulo || 'SEM TÍTULO'}</h3>
+                                <p class="text-indigo-600 font-bold text-sm tracking-tight">${nomeArtista}</p>
                             </div>
-                            <div class="flex items-center gap-3 mt-3 text-[11px] text-slate-400">
-                                <span><i class="fas fa-hashtag mr-1"></i>${t.numero_tape || t.id}</span>
-                                ${t.gravadora ? `<span><i class="fas fa-compact-disc mr-1"></i>${t.gravadora}</span>` : ''}
+                            <span class="text-[10px] font-black bg-slate-100 text-slate-500 px-2 py-1 rounded-lg">#${t.id}</span>
+                        </div>
+
+                        <div class="flex items-center gap-4 py-3 border-y border-slate-50">
+                            <div class="flex-1">
+                                <p class="text-[9px] uppercase font-black text-slate-400 tracking-widest">Gravadora</p>
+                                <p class="text-xs font-bold text-slate-700 truncate">${nomeGravadora}</p>
                             </div>
-                            <div class="flex gap-2 mt-4">
-                                <a href="ver.html?id=${t.id}" class="flex-1 bg-indigo-50 text-indigo-700 py-2 rounded-lg text-xs font-bold text-center touch-target flex items-center justify-center gap-1">
-                                    <i class="fas fa-eye"></i> Detalhes
-                                </a>
-                                <a href="editar.html?id=${t.id}" class="flex-1 bg-amber-50 text-amber-700 py-2 rounded-lg text-xs font-bold text-center touch-target flex items-center justify-center gap-1">
-                                    <i class="fas fa-edit"></i> Editar
-                                </a>
+                            <div class="w-px h-6 bg-slate-100"></div>
+                            <div class="flex-1">
+                                <p class="text-[9px] uppercase font-black text-slate-400 tracking-widest">Nº Tape</p>
+                                <p class="text-xs font-bold text-slate-700">${t.numero_tape || '-'}</p>
                             </div>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <a href="ver.html?id=${t.id}" class="flex-1 bg-indigo-600 text-white text-[11px] font-black py-3 rounded-2xl text-center shadow-lg shadow-indigo-100 active:scale-95 transition-all">DETALHES</a>
+                            <a href="editar.html?id=${t.id}" class="w-12 bg-slate-50 text-slate-400 flex items-center justify-center rounded-2xl active:bg-slate-100">
+                                <i class="fas fa-pen text-xs"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -242,61 +175,52 @@
         }).join('');
     }
 
-    function getStatusBadge(item) {
-        if (item.subiu_streaming) return { cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', txt: 'ON STREAM' };
-        if (item.digitalizada) return { cls: 'bg-blue-50 text-blue-700 border-blue-200', txt: 'DIGITALIZADA' };
-        if (item.nao_pode_subir) return { cls: 'bg-red-50 text-red-700 border-red-200', txt: 'BLOQUEADA' };
-        return { cls: 'bg-slate-50 text-slate-500 border-slate-200', txt: 'OFF STREAM' };
+    function atualizarInterface() {
+        const currentSpan = document.getElementById('current-page');
+        const totalSpan = document.getElementById('total-pages');
+        const prevBtn = document.getElementById('prev-page');
+        const nextBtn = document.getElementById('next-page');
+
+        if (totalPages === 0) {
+            currentSpan.textContent = '0';
+            totalSpan.textContent = '0';
+            prevBtn.disabled = true;
+            nextBtn.disabled = true;
+        } else {
+            currentSpan.textContent = currentPage;
+            totalSpan.textContent = totalPages;
+            prevBtn.disabled = currentPage <= 1;
+            nextBtn.disabled = currentPage >= totalPages;
+        }
     }
 
-    function toggleSelect(id) {
-        if (selectedIds.has(id)) selectedIds.delete(id);
-        else selectedIds.add(id);
-    }
+    // Debounce na busca
+    let timer;
+    document.getElementById('search-input').addEventListener('input', () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => { 
+            currentPage = 1; 
+            carregarTapes(); 
+        }, 400);
+    });
 
-    function atualizarInterfacePagina(total) {
-        document.getElementById('current-page').textContent = currentPage;
-        document.getElementById('total-pages').textContent = totalPages || 1;
-        document.getElementById('prev-page').disabled = currentPage <= 1;
-        document.getElementById('next-page').disabled = currentPage >= totalPages;
-    }
-
-    // Exportação
-    window.exportarTudo = () => {
-        const csv = "ID,Titulo,Artista\n" + currentData.map(r => `${r.id},"${r.titulo}","${r.artista}"`).join("\n");
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'catalogo_completo.csv';
-        a.click();
+    document.getElementById('prev-page').onclick = () => { 
+        if (currentPage > 1) { 
+            currentPage--; 
+            carregarTapes(); 
+            window.scrollTo(0, 0); 
+        }
     };
 
-    window.exportarSelecionados = () => {
-        if(selectedIds.size === 0) return alert("Selecione itens primeiro");
-        const filtrados = currentData.filter(r => selectedIds.has(String(r.id)));
-        const csv = "ID,Titulo,Artista\n" + filtrados.map(r => `${r.id},"${r.titulo}","${r.artista}"`).join("\n");
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'selecao.csv';
-        a.click();
+    document.getElementById('next-page').onclick = () => { 
+        if (currentPage < totalPages) { 
+            currentPage++; 
+            carregarTapes(); 
+            window.scrollTo(0, 0); 
+        }
     };
 
-    // Eventos
-    document.getElementById('toggleFilterBtn').onclick = () => filterPanel.classList.toggle('hidden');
-    document.getElementById('applyFilterBtn').onclick = () => {
-        currentPage = 1;
-        filterPanel.classList.add('hidden');
-        carregarTapes();
-    };
-    document.getElementById('prev-page').onclick = () => { if(currentPage > 1) { currentPage--; carregarTapes(); } };
-    document.getElementById('next-page').onclick = () => { if(currentPage < totalPages) { currentPage++; carregarTapes(); } };
-    
-    searchInput.onkeypress = (e) => { if(e.key === 'Enter') { currentPage = 1; carregarTapes(); } };
-
-    // Iniciar
+    // Carrega os tapes ao iniciar
     carregarTapes();
 </script>
 
