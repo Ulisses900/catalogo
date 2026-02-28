@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Catálogo Musical</title>
+    <style>
+        /* ===== RESET E VARIÁVEIS ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            padding: 16px 16px 32px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* ===== TÍTULO ===== */
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+            border-left: 6px solid #3b82f6;
+            padding-left: 16px;
+        }
+
+        /* ===== CONTROLES (FILTROS) ===== */
+        .filters {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .search-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #334155;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            font-size: 1rem;
+            background-color: #fff;
+            transition: border 0.2s, box-shadow 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+        }
+
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 16px;
+        }
+
+        .row-dupla {
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .row-dupla > * {
+            flex: 1 1 150px;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            flex: 1 1 auto;
+            background-color: #3b82f6;
+            border: none;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding: 16px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: 1px solid transparent;
+            min-width: 140px;
+            touch-action: manipulation;
+        }
+
+        .btn:hover {
+            background-color: #2563eb;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background-color: #64748b;
+        }
+
+        .btn-secondary:hover {
+            background-color: #475569;
+        }
+
+        .result-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 16px 0 12px;
+            font-size: 1rem;
+            color: #1e293b;
+            font-weight: 500;
+            background: white;
+            padding: 12px 16px;
+            border-radius: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+
+        #contador {
+            background: #e2e8f0;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+        }
+
+        /* ===== CARDS (mobile first) ===== */
+        .cards-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.04);
+            border: 1px solid #f1f5f9;
+            transition: transform 0.1s;
+        }
+
+        .card:active {
+            transform: scale(0.99);
+        }
+
+        .card-titulo {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 6px;
+            line-height: 1.3;
+        }
+
+        .card-artista {
+            font-size: 1.1rem;
+            color: #3b82f6;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-artista::before {
+            content: "🎤";
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+
+        .card-detalhes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px 20px;
+            margin-top: 12px;
+            border-top: 1px dashed #e2e8f0;
+            padding-top: 16px;
+        }
+
+        .card-detalhe {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-detalhe-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #64748b;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .card-detalhe-valor {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        /* ===== TABELA (desktop) ===== */
+        .table-container {
+            display: none;
+            overflow-x: auto;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.04);
+            padding: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+            min-width: 700px;
+        }
+
+        th {
+            text-align: left;
+            padding: 18px 16px;
+            background-color: #f8fafc;
+            color: #334155;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #1e293b;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* ===== LOADING ===== */
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            background: white;
+            border-radius: 30px;
+            font-size: 1.2rem;
+            color: #64748b;
+            display: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .loading::after {
+            content: "⏳";
+            margin-left: 8px;
+            animation: piscar 1s infinite;
+        }
+
+        @keyframes piscar {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
+        .sem-resultados {
+            text-align: center;
+            padding: 40px 20px;
+            background: white;
+            border-radius: 30px;
+            color: #64748b;
+            font-size: 1.2rem;
+            border: 1px dashed #cbd5e1;
+        }
+
+        .hide {
+            display: none;
+        }
+
+        /* ===== MEDIA QUERY: DESKTOP (a partir de 900px) ===== */
+        @media (min-width: 900px) {
+            .cards-container {
+                display: none;
+            }
+
+            .table-container {
+                display: block;
+            }
+
+            .filters {
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-items: flex-end;
+            }
+
+            .search-group {
+                flex: 2 1 250px;
+            }
+
+            .row-dupla {
+                flex: 3 1 400px;
+            }
+
+            .button-group {
+                flex: 1 1 auto;
+                justify-content: flex-end;
+            }
+
+            .btn {
+                padding: 14px 24px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .row-dupla {
+                flex-direction: column;
+                gap: 16px;
+            }
+            .button-group {
+                flex-direction: column;
+            }
+        }
+
+        footer {
+            margin-top: 32px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Catálogo Musical</h1>
+
+        <!-- ÁREA DE FILTROS -->
+        <div class="filters">
+            <div class="search-group">
+                <label for="busca">Buscar (título/artista)</label>
+                <input type="text" id="busca" placeholder="Digite...">
+            </div>
+
+            <div class="row-dupla">
+                <div>
+                    <label for="genero">Gênero</label>
+                    <select id="genero">
+                        <option value="">Todos</option>
+                        <!-- Será preenchido via JS -->
+                    </select>
+                </div>
+                <div>
+                    <label for="limite">Limite</label>
+                    <select id="limite">
+                        <option value="50">50</option>
+                        <option value="100" selected>100</option>
+                        <option value="500">500</option>
+                        <option value="1000">1000</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn" id="btnBuscar">🔍 Buscar</button>
+                <button class="btn btn-secondary" id="btnExportar">📥 Exportar CSV</button>
+            </div>
+        </div>
+
+        <!-- INFO DE RESULTADOS -->
+        <div class="result-info">
+            <span id="resultadosTexto">Resultados</span>
+            <span id="contador">0</span>
+        </div>
+
+        <!-- INDICADOR DE LOADING -->
+        <div id="loading" class="loading">Carregando</div>
+
+        <!-- CARDS (mobile) -->
+        <div id="cardsContainer" class="cards-container"></div>
+
+        <!-- TABELA (desktop) -->
+        <div id="tableContainer" class="table-container">
+            <table id="tabela">
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Artista</th>
+                        <th>Ano</th>
+                        <th>Gravadora</th>
+                        <th>Gênero</th>
+                        <th>Formato</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaBody">
+                    <!-- preenchido via js -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- mensagem sem resultados -->
+        <div id="semResultados" class="sem-resultados hide">Nenhum resultado encontrado.</div>
+
+        <footer>
+            Dados de catálogo musical • consulta direta ao Supabase
+        </footer>
+    </div>
+
+    <!-- Supabase JS via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        // ==================== CONFIGURAÇÃO ====================
+        // 🔧 Dados do seu projeto Supabase (já preenchidos)
+        const SUPABASE_URL = 'https://edabpftowxcyvsmuzzdf.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
+
+        // Inicializa o cliente Supabase
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ==================== ESTADO GLOBAL ====================
+        let ultimosDados = [];
+        let generosUnicos = [];
+
+        // Elementos DOM
+        const buscaInput = document.getElementById('busca');
+        const generoSelect = document.getElementById('genero');
+        const limiteSelect = document.getElementById('limite');
+        const btnBuscar = document.getElementById('btnBuscar');
+        const btnExportar = document.getElementById('btnExportar');
+        const cardsContainer = document.getElementById('cardsContainer');
+        const tabelaBody = document.getElementById('tabelaBody');
+        const loadingDiv = document.getElementById('loading');
+        const semResultadosDiv = document.getElementById('semResultados');
+        const contadorSpan = document.getElementById('contador');
+        const resultadosTexto = document.getElementById('resultadosTexto');
+
+        // ==================== FUNÇÕES AUXILIARES ====================
+        function mostrarLoading(mostrar) {
+            if (mostrar) {
+                loadingDiv.classList.add('active');
+                cardsContainer.innerHTML = '';
+                tabelaBody.innerHTML = '';
+                semResultadosDiv.classList.add('hide');
+            } else {
+                loadingDiv.classList.remove('active');
+            }
+        }
+
+        function atualizarContador(total) {
+            contadorSpan.textContent = total;
+            resultadosTexto.textContent = total === 1 ? '1 resultado' : total + ' resultados';
+        }
+
+        // ==================== BUSCAR DADOS (SUPABASE) ====================
+        async function buscarDados() {
+            const termo = buscaInput.value.trim();
+            const genero = generoSelect.value;
+            const limite = parseInt(limiteSelect.value, 10);
+
+            mostrarLoading(true);
+
+            try {
+                let query = supabase
+                    .from('tapes')
+                    .select('*')
+                    .order('ano', { ascending: false })
+                    .limit(limite);
+
+                if (genero) {
+                    query = query.eq('genero', genero);
+                }
+
+                if (termo !== '') {
+                    // busca por título ou artista (ilike)
+                    query = query.or(`titulo.ilike.%${termo}%,artista.ilike.%${termo}%`);
+                }
+
+                const { data, error } = await query;
+
+                if (error) {
+                    console.error('Erro na consulta:', error);
+                    alert('Erro ao buscar dados: ' + error.message);
+                    mostrarLoading(false);
+                    return;
+                }
+
+                ultimosDados = data || [];
+
+                const total = ultimosDados.length;
+                atualizarContador(total);
+
+                if (total === 0) {
+                    cardsContainer.innerHTML = '';
+                    tabelaBody.innerHTML = '';
+                    semResultadosDiv.classList.remove('hide');
+                } else {
+                    semResultadosDiv.classList.add('hide');
+                    renderCards(ultimosDados);
+                    renderTabela(ultimosDados);
+                }
+
+                // Popula gêneros se ainda não foi feito
+                if (generosUnicos.length === 0) {
+                    await carregarGeneros();
+                }
+
+            } catch (err) {
+                console.error('Erro inesperado:', err);
+                alert('Erro inesperado. Ver console.');
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+        // ==================== RENDERIZAÇÃO CARDS ====================
+        function renderCards(dados) {
+            let html = '';
+            dados.forEach(item => {
+                html += `
+                    <div class="card">
+                        <div class="card-titulo">${escapeHTML(item.titulo) || '—'}</div>
+                        <div class="card-artista">${escapeHTML(item.artista) || '—'}</div>
+                        <div class="card-detalhes">
+                            <div class="card-detalhe">
+                                <span class="card-detalhe-label">Ano</span>
+                                <span class="card-detalhe-valor">${item.ano || '—'}</span>
+                            </div>
+                            <div class="card-detalhe">
+                                <span class="card-detalhe-label">Gravadora</span>
+                                <span class="card-detalhe-valor">${escapeHTML(item.gravadora) || '—'}</span>
+                            </div>
+                            <div class="card-detalhe">
+                                <span class="card-detalhe-label">Gênero</span>
+                                <span class="card-detalhe-valor">${escapeHTML(item.genero) || '—'}</span>
+                            </div>
+                            <div class="card-detalhe">
+                                <span class="card-detalhe-label">Formato</span>
+                                <span class="card-detalhe-valor">${escapeHTML(item.formato) || '—'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            cardsContainer.innerHTML = html;
+        }
+
+        // ==================== RENDERIZAÇÃO TABELA ====================
+        function renderTabela(dados) {
+            let linhas = '';
+            dados.forEach(item => {
+                linhas += `
+                    <tr>
+                        <td>${escapeHTML(item.titulo) || '—'}</td>
+                        <td>${escapeHTML(item.artista) || '—'}</td>
+                        <td>${item.ano || '—'}</td>
+                        <td>${escapeHTML(item.gravadora) || '—'}</td>
+                        <td>${escapeHTML(item.genero) || '—'}</td>
+                        <td>${escapeHTML(item.formato) || '—'}</td>
+                    </tr>
+                `;
+            });
+            tabelaBody.innerHTML = linhas;
+        }
+
+        // ==================== CARREGAR GÊNEROS PARA O SELECT ====================
+        async function carregarGeneros() {
+            try {
+                const { data, error } = await supabase
+                    .from('tapes')
+                    .select('genero')
+                    .not('genero', 'is', null);
+
+                if (error) {
+                    console.warn('Não foi possível carregar gêneros:', error);
+                    return;
+                }
+
+                const generos = [...new Set(data.map(item => item.genero).filter(g => g))].sort();
+
+                generosUnicos = generos;
+
+                let options = '<option value="">Todos</option>';
+                generos.forEach(g => {
+                    options += `<option value="${escapeHTML(g)}">${escapeHTML(g)}</option>`;
+                });
+                generoSelect.innerHTML = options;
+            } catch (e) {
+                console.warn('Erro ao carregar gêneros:', e);
+            }
+        }
+
+        // ==================== EXPORTAR CSV ====================
+        function exportarCSV() {
+            if (ultimosDados.length === 0) {
+                alert('Nenhum dado para exportar. Faça uma busca primeiro.');
+                return;
+            }
+
+            const cabecalho = ['id', 'titulo', 'artista', 'ano', 'gravadora', 'genero', 'formato'];
+
+            const linhas = ultimosDados.map(item => [
+                item.id,
+                item.titulo,
+                item.artista,
+                item.ano,
+                item.gravadora,
+                item.genero,
+                item.formato
+            ]);
+
+            const escapeCSV = (campo) => {
+                if (campo === null || campo === undefined) return '';
+                let str = String(campo);
+                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                    str = str.replace(/"/g, '""');
+                    return `"${str}"`;
+                }
+                return str;
+            };
+
+            const cabecalhoEscapado = cabecalho.map(escapeCSV).join(',');
+            const linhasEscapadas = linhas.map(linha => linha.map(escapeCSV).join(','));
+            const csvConteudo = [cabecalhoEscapado, ...linhasEscapadas].join('\n');
+
+            const blob = new Blob([csvConteudo], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            link.setAttribute('download', 'tapes.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // ==================== ESCAPAR HTML ====================
+        function escapeHTML(texto) {
+            if (!texto) return '';
+            return String(texto)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // ==================== EVENTOS ====================
+        btnBuscar.addEventListener('click', buscarDados);
+        btnExportar.addEventListener('click', exportarCSV);
+        buscaInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                buscarDados();
+            }
+        });
+
+        // ==================== INICIALIZAÇÃO ====================
+        window.addEventListener('load', () => {
+            carregarGeneros();
+            buscarDados();
+        });
+    </script>
+</body>
+</html>
