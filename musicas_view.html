@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ficha Técnica da Música</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 p-4">
+
+    <div class="max-w-lg mx-auto" id="app">
+        <button onclick="history.back()" class="text-indigo-600 font-bold flex items-center gap-2 mb-6">
+            <i class="fas fa-arrow-left"></i> Voltar para Músicas
+        </button>
+
+        <div id="loading" class="py-20 text-center text-slate-400 italic">Buscando ficha técnica...</div>
+
+        <div id="content" class="hidden space-y-4">
+            <div class="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-[2.5rem] p-8 text-white shadow-xl shadow-indigo-200">
+                <span class="bg-white/20 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-white/20" id="faixa-id">FAIXA #--</span>
+                <h1 class="text-3xl font-black mt-4 mb-1 leading-tight" id="musica-titulo">---</h1>
+                <p class="text-indigo-100 font-bold" id="musica-autor">---</p>
+                
+                <div class="mt-8 flex gap-4">
+                    <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 flex-1 border border-white/10 text-center">
+                        <span class="block text-[9px] font-black uppercase tracking-widest opacity-60">Lado</span>
+                        <span class="text-2xl font-black" id="musica-lado">-</span>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 flex-1 border border-white/10 text-center">
+                        <span class="block text-[9px] font-black uppercase tracking-widest opacity-60">Posição</span>
+                        <span class="text-2xl font-black" id="musica-posicao">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm">
+                <h2 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Álbum / Tape de Origem</h2>
+                <a id="tape-link" href="#" class="flex items-center justify-between group">
+                    <div>
+                        <p class="font-black text-slate-900 group-hover:text-indigo-600 transition-colors" id="tape-titulo">---</p>
+                        <p class="text-xs text-slate-500 font-bold" id="tape-numero">Nº ---</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-slate-300 group-hover:text-indigo-600"></i>
+                </a>
+            </div>
+
+            <div class="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm grid grid-cols-1 gap-4">
+                <div>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Gênero Musical</label>
+                    <p class="text-sm font-bold text-slate-700" id="musica-genero">---</p>
+                </div>
+                <div class="h-px bg-slate-50"></div>
+                <div>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Observações da Faixa</label>
+                    <p class="text-sm text-slate-600 italic" id="musica-obs">Nenhuma observação cadastrada.</p>
+                </div>
+            </div>
+
+            <a id="btn-edit-tape" href="#" class="block w-full bg-slate-100 text-slate-500 font-black py-4 rounded-2xl text-center text-xs uppercase tracking-widest">
+                Editar no Tape Original
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://edabpftowxcyvsmuzzdf.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const musicaId = urlParams.get('id');
+
+        async function carregarFicha() {
+            if (!musicaId) return;
+
+            const { data: m, error } = await supabaseClient
+                .from('faixas')
+                .select('*, tapes(*)')
+                .eq('id', musicaId)
+                .single();
+
+            if (error) {
+                document.getElementById('loading').innerHTML = `<span class="text-red-500 font-bold">Erro: ${error.message}</span>`;
+                return;
+            }
+
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('content').classList.remove('hidden');
+
+            document.getElementById('faixa-id').innerText = `FAIXA #${m.id}`;
+            document.getElementById('musica-titulo').innerText = m.musica || 'Sem Título';
+            document.getElementById('musica-autor').innerText = m.autor || 'Autor não informado';
+            document.getElementById('musica-lado').innerText = m.lado || '-';
+            document.getElementById('musica-posicao').innerText = m.numero || '-';
+            document.getElementById('musica-genero').innerText = m.genero || '---';
+            
+            document.getElementById('tape-titulo').innerText = m.tapes?.titulo || 'Tape não identificada';
+            document.getElementById('tape-numero').innerText = `Ref: ${m.tapes?.numero_tape || 'N/A'}`;
+            document.getElementById('tape-link').href = `ver.html?id=${m.tape_id}`;
+            document.getElementById('btn-edit-tape').href = `editar.html?id=${m.tape_id}`;
+        }
+
+        carregarFicha();
+    </script>
+</body>
+</html>
