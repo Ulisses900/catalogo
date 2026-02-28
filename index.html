@@ -3,678 +3,706 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Catálogo Musical</title>
+    <title>Catálogo de Tapes</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* ===== RESET E VARIÁVEIS ===== */
+        /* ===== VARIÁVEIS E RESET ===== */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
-
         body {
             background-color: #f8fafc;
-            padding: 16px 16px 32px;
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
         }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            width: 100%;
+        .touch-target {
+            min-height: 44px;
+            min-width: 44px;
         }
-
-        /* ===== TÍTULO ===== */
-        h1 {
-            font-size: 1.8rem;
-            font-weight: 600;
-            color: #0f172a;
-            margin-bottom: 20px;
-            letter-spacing: -0.02em;
-            border-left: 6px solid #3b82f6;
-            padding-left: 16px;
+        .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom, 80px);
         }
-
-        /* ===== CONTROLES (FILTROS) ===== */
-        .filters {
-            background: white;
-            border-radius: 24px;
-            padding: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            margin-bottom: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
+        .bottom-nav-shadow {
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
         }
-
-        .search-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        label {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #334155;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 14px 16px;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            font-size: 1rem;
-            background-color: #fff;
-            transition: border 0.2s, box-shadow 0.2s;
-            -webkit-appearance: none;
+        /* Checkbox customizado */
+        .card-checkbox {
             appearance: none;
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
         }
-
-        input:focus, select:focus {
+        .card-checkbox:checked {
+            background: #4f46e5;
+            border-color: #4f46e5;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z'/%3E%3C/svg%3E");
+            background-size: 16px;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        /* Utilitários */
+        .hidden {
+            display: none !important;
+        }
+        .min-h-screen {
+            min-height: 100vh;
+        }
+        .bg-slate-50\/50 {
+            background-color: rgba(248, 250, 252, 0.5);
+        }
+        .bg-white {
+            background-color: #ffffff;
+        }
+        .border-b {
+            border-bottom-width: 1px;
+        }
+        .border-slate-200 {
+            border-color: #e2e8f0;
+        }
+        .px-4 {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        .pt-6 {
+            padding-top: 1.5rem;
+        }
+        .pb-4 {
+            padding-bottom: 1rem;
+        }
+        .flex {
+            display: flex;
+        }
+        .items-center {
+            align-items: center;
+        }
+        .justify-between {
+            justify-content: space-between;
+        }
+        .gap-2 {
+            gap: 0.5rem;
+        }
+        .text-2xl {
+            font-size: 1.5rem;
+        }
+        .font-extrabold {
+            font-weight: 800;
+        }
+        .text-slate-900 {
+            color: #0f172a;
+        }
+        .tracking-tight {
+            letter-spacing: -0.025em;
+        }
+        .p-3 {
+            padding: 0.75rem;
+        }
+        .rounded-xl {
+            border-radius: 0.75rem;
+        }
+        .border {
+            border-width: 1px;
+        }
+        .text-slate-700 {
+            color: #334155;
+        }
+        .bg-indigo-600 {
+            background-color: #4f46e5;
+        }
+        .text-white {
+            color: white;
+        }
+        .shadow-lg {
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+        .shadow-indigo-200 {
+            box-shadow: 0 4px 6px -1px rgba(199, 210, 254, 0.5);
+        }
+        .text-lg {
+            font-size: 1.125rem;
+        }
+        .relative {
+            position: relative;
+        }
+        .flex-1 {
+            flex: 1;
+        }
+        .w-full {
+            width: 100%;
+        }
+        .py-3 {
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
+        }
+        .pl-10 {
+            padding-left: 2.5rem;
+        }
+        .pr-3 {
+            padding-right: 0.75rem;
+        }
+        .focus\:outline-none:focus {
             outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
         }
-
+        .focus\:ring-2:focus {
+            box-shadow: 0 0 0 2px #4f46e5;
+        }
+        .focus\:ring-indigo-500:focus {
+            --tw-ring-color: #6366f1;
+        }
+        .text-base {
+            font-size: 1rem;
+        }
+        .absolute {
+            position: absolute;
+        }
+        .left-3 {
+            left: 0.75rem;
+        }
+        .top-3\.5 {
+            top: 0.875rem;
+        }
+        .text-slate-400 {
+            color: #94a3b8;
+        }
+        .mt-3 {
+            margin-top: 0.75rem;
+        }
+        .grid {
+            display: grid;
+        }
+        .grid-cols-2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .gap-2 {
+            gap: 0.5rem;
+        }
+        .text-xs {
+            font-size: 0.75rem;
+        }
+        .font-bold {
+            font-weight: 700;
+        }
+        .mb-1 {
+            margin-bottom: 0.25rem;
+        }
+        .text-slate-500 {
+            color: #64748b;
+        }
+        .uppercase {
+            text-transform: uppercase;
+        }
+        .tracking-wider {
+            letter-spacing: 0.05em;
+        }
         select {
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
             background-repeat: no-repeat;
             background-position: right 16px center;
             background-size: 16px;
+            appearance: none;
         }
-
-        .row-dupla {
-            display: flex;
-            flex-direction: row;
-            gap: 12px;
-            flex-wrap: wrap;
+        .mt-2 {
+            margin-top: 0.5rem;
         }
-
-        .row-dupla > * {
-            flex: 1 1 150px;
+        .bg-indigo-600 {
+            background-color: #4f46e5;
         }
-
-        .button-group {
-            display: flex;
-            flex-direction: row;
-            gap: 12px;
-            margin-top: 8px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            flex: 1 1 auto;
-            background-color: #3b82f6;
-            border: none;
+        .text-white {
             color: white;
-            font-weight: 600;
-            font-size: 1.1rem;
-            padding: 16px 20px;
-            border-radius: 40px;
-            cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            border: 1px solid transparent;
-            min-width: 140px;
-            touch-action: manipulation;
         }
-
-        .btn:hover {
-            background-color: #2563eb;
+        .px-4 {
+            padding-left: 1rem;
+            padding-right: 1rem;
         }
-
-        .btn:active {
-            transform: scale(0.98);
+        .py-3 {
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
         }
-
-        .btn-secondary {
-            background-color: #64748b;
+        .rounded-xl {
+            border-radius: 0.75rem;
         }
-
-        .btn-secondary:hover {
-            background-color: #475569;
-        }
-
-        .result-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 16px 0 12px;
-            font-size: 1rem;
-            color: #1e293b;
-            font-weight: 500;
-            background: white;
-            padding: 12px 16px;
-            border-radius: 30px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-        }
-
-        #contador {
-            background: #e2e8f0;
-            padding: 4px 12px;
-            border-radius: 40px;
-            font-size: 0.9rem;
-        }
-
-        /* ===== CARDS (mobile first) ===== */
-        .cards-container {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .card {
-            background: white;
-            border-radius: 24px;
-            padding: 20px;
-            box-shadow: 0 6px 14px rgba(0,0,0,0.04);
-            border: 1px solid #f1f5f9;
-            transition: transform 0.1s;
-        }
-
-        .card:active {
-            transform: scale(0.99);
-        }
-
-        .card-titulo {
-            font-size: 1.4rem;
+        .font-bold {
             font-weight: 700;
-            color: #0f172a;
-            margin-bottom: 6px;
-            line-height: 1.3;
         }
-
-        .card-artista {
-            font-size: 1.1rem;
-            color: #3b82f6;
-            font-weight: 600;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .card-artista::before {
-            content: "🎤";
+        .text-base {
             font-size: 1rem;
-            opacity: 0.8;
         }
-
-        .card-detalhes {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 16px 20px;
-            margin-top: 12px;
-            border-top: 1px dashed #e2e8f0;
-            padding-top: 16px;
+        .mr-2 {
+            margin-right: 0.5rem;
         }
-
-        .card-detalhe {
+        .pt-4 {
+            padding-top: 1rem;
+        }
+        .pb-24 {
+            padding-bottom: 6rem;
+        }
+        .space-y-3 > :not([hidden]) ~ :not([hidden]) {
+            margin-top: 0.75rem;
+        }
+        .bg-white {
+            background-color: white;
+        }
+        .rounded-2xl {
+            border-radius: 1rem;
+        }
+        .shadow-sm {
+            box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+        }
+        .border-slate-100 {
+            border-color: #f1f5f9;
+        }
+        .p-4 {
+            padding: 1rem;
+        }
+        .items-start {
+            align-items: flex-start;
+        }
+        .gap-3 {
+            gap: 0.75rem;
+        }
+        .mt-1 {
+            margin-top: 0.25rem;
+        }
+        .flex-1 {
+            flex: 1;
+        }
+        .min-w-0 {
+            min-width: 0;
+        }
+        .truncate {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .text-base {
+            font-size: 1rem;
+        }
+        .text-slate-900 {
+            color: #0f172a;
+        }
+        .text-sm {
+            font-size: 0.875rem;
+        }
+        .text-slate-600 {
+            color: #475569;
+        }
+        .flex-shrink-0 {
+            flex-shrink: 0;
+        }
+        .px-2 {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+        .py-0\.5 {
+            padding-top: 0.125rem;
+            padding-bottom: 0.125rem;
+        }
+        .rounded-full {
+            border-radius: 9999px;
+        }
+        .text-\[10px\] {
+            font-size: 0.625rem;
+        }
+        .border {
+            border-width: 1px;
+        }
+        .bg-emerald-50 {
+            background-color: #ecfdf5;
+        }
+        .text-emerald-700 {
+            color: #047857;
+        }
+        .border-emerald-100 {
+            border-color: #d1fae5;
+        }
+        .bg-sky-50 {
+            background-color: #f0f9ff;
+        }
+        .text-sky-700 {
+            color: #0369a1;
+        }
+        .border-sky-100 {
+            border-color: #e0f2fe;
+        }
+        .bg-rose-50 {
+            background-color: #fff1f2;
+        }
+        .text-rose-700 {
+            color: #be123c;
+        }
+        .border-rose-100 {
+            border-color: #ffe4e6;
+        }
+        .bg-slate-100 {
+            background-color: #f1f5f9;
+        }
+        .text-slate-700 {
+            color: #334155;
+        }
+        .border-slate-200 {
+            border-color: #e2e8f0;
+        }
+        .mt-2 {
+            margin-top: 0.5rem;
+        }
+        .text-xs {
+            font-size: 0.75rem;
+        }
+        .text-slate-400 {
+            color: #94a3b8;
+        }
+        .mr-1 {
+            margin-right: 0.25rem;
+        }
+        .mt-3 {
+            margin-top: 0.75rem;
+        }
+        .flex {
             display: flex;
+        }
+        .gap-2 {
+            gap: 0.5rem;
+        }
+        .bg-indigo-50 {
+            background-color: #eef2ff;
+        }
+        .text-indigo-700 {
+            color: #4338ca;
+        }
+        .bg-amber-50 {
+            background-color: #fffbeb;
+        }
+        .text-amber-700 {
+            color: #b45309;
+        }
+        .bg-rose-50 {
+            background-color: #fff1f2;
+        }
+        .text-rose-700 {
+            color: #be123c;
+        }
+        .fixed {
+            position: fixed;
+        }
+        .bottom-16 {
+            bottom: 4rem;
+        }
+        .left-0 {
+            left: 0;
+        }
+        .right-0 {
+            right: 0;
+        }
+        .bg-white {
+            background-color: white;
+        }
+        .border-t {
+            border-top-width: 1px;
+        }
+        .border-slate-200 {
+            border-color: #e2e8f0;
+        }
+        .px-4 {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        .py-3 {
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
+        }
+        .flex {
+            display: flex;
+        }
+        .items-center {
+            align-items: center;
+        }
+        .justify-between {
+            justify-content: space-between;
+        }
+        .shadow-lg {
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+        .z-10 {
+            z-index: 10;
+        }
+        .p-3 {
+            padding: 0.75rem;
+        }
+        .px-4 {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        .rounded-xl {
+            border-radius: 0.75rem;
+        }
+        .border {
+            border-width: 1px;
+        }
+        .border-slate-200 {
+            border-color: #e2e8f0;
+        }
+        .bg-white {
+            background-color: white;
+        }
+        .text-slate-600 {
+            color: #475569;
+        }
+        .font-bold {
+            font-weight: 700;
+        }
+        .disabled\:opacity-40:disabled {
+            opacity: 0.4;
+        }
+        .transition-all {
+            transition-property: all;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+        }
+        .text-sm {
+            font-size: 0.875rem;
+        }
+        .text-slate-500 {
+            color: #64748b;
+        }
+        .bottom-nav-shadow {
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+        }
+        .z-20 {
+            z-index: 20;
+        }
+        .flex-col {
             flex-direction: column;
         }
-
-        .card-detalhe-label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            color: #64748b;
-            font-weight: 600;
-            letter-spacing: 0.3px;
+        .text-\[10px\] {
+            font-size: 0.625rem;
         }
-
-        .card-detalhe-valor {
-            font-size: 1rem;
-            font-weight: 500;
-            color: #1e293b;
+        .mt-1 {
+            margin-top: 0.25rem;
         }
-
-        /* ===== TABELA (desktop) ===== */
-        .table-container {
-            display: none;
-            overflow-x: auto;
-            background: white;
-            border-radius: 24px;
-            box-shadow: 0 6px 14px rgba(0,0,0,0.04);
-            padding: 4px;
+        .bottom-24 {
+            bottom: 6rem;
         }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.95rem;
-            min-width: 700px;
+        .right-4 {
+            right: 1rem;
         }
-
-        th {
-            text-align: left;
-            padding: 18px 16px;
-            background-color: #f8fafc;
-            color: #334155;
-            font-weight: 600;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            border-bottom: 2px solid #e2e8f0;
+        .bg-indigo-600 {
+            background-color: #4f46e5;
         }
-
-        td {
-            padding: 16px;
-            border-bottom: 1px solid #f1f5f9;
-            color: #1e293b;
+        .text-white {
+            color: white;
         }
-
-        tr:last-child td {
-            border-bottom: none;
+        .p-4 {
+            padding: 1rem;
         }
-
-        /* ===== LOADING ===== */
-        .loading {
-            text-align: center;
-            padding: 40px 20px;
-            background: white;
-            border-radius: 30px;
-            font-size: 1.2rem;
-            color: #64748b;
-            display: none;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        .rounded-full {
+            border-radius: 9999px;
         }
-
-        .loading.active {
-            display: block;
+        .shadow-lg {
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
         }
-
-        .loading::after {
-            content: "⏳";
-            margin-left: 8px;
-            animation: piscar 1s infinite;
+        .z-30 {
+            z-index: 30;
         }
-
-        @keyframes piscar {
-            0% { opacity: 1; }
-            50% { opacity: 0.3; }
-            100% { opacity: 1; }
+        .text-2xl {
+            font-size: 1.5rem;
         }
-
-        .sem-resultados {
-            text-align: center;
-            padding: 40px 20px;
-            background: white;
-            border-radius: 30px;
-            color: #64748b;
-            font-size: 1.2rem;
-            border: 1px dashed #cbd5e1;
+        /* Paginação desabilitada visualmente */
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
         }
-
-        .hide {
-            display: none;
-        }
-
-        /* ===== MEDIA QUERY: DESKTOP (a partir de 900px) ===== */
-        @media (min-width: 900px) {
-            .cards-container {
-                display: none;
-            }
-
-            .table-container {
-                display: block;
-            }
-
-            .filters {
-                flex-direction: row;
-                flex-wrap: wrap;
-                align-items: flex-end;
-            }
-
-            .search-group {
-                flex: 2 1 250px;
-            }
-
-            .row-dupla {
-                flex: 3 1 400px;
-            }
-
-            .button-group {
-                flex: 1 1 auto;
-                justify-content: flex-end;
-            }
-
-            .btn {
-                padding: 14px 24px;
-                font-size: 1rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .row-dupla {
-                flex-direction: column;
-                gap: 16px;
-            }
-            .button-group {
-                flex-direction: column;
-            }
-        }
-
-        footer {
-            margin-top: 32px;
-            text-align: center;
+        /* Breadcrumb simulado */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            font-size: 0.75rem;
+            font-weight: 700;
             color: #94a3b8;
-            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+        .breadcrumb span:last-child {
+            color: #4f46e5;
+        }
+        .breadcrumb i {
+            font-size: 8px;
+            margin: 0 0.5rem;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎵 Catálogo Musical</h1>
+    <div class="min-h-screen bg-slate-50/50 pb-safe">
+        <!-- Cabeçalho com breadcrumb e ações de exportação -->
+        <div class="bg-white border-b border-slate-200 px-4 pt-6 pb-4">
+            <div class="breadcrumb">
+                <span>Dashboard</span>
+                <i class="fas fa-chevron-right"></i>
+                <span>Catálogo de Tapes</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Acervo</h1>
+                <div class="flex gap-2">
+                    <button onclick="exportarSelecionados()" class="bg-white border border-slate-200 text-slate-700 p-3 rounded-xl touch-target" title="Exportar seleção">
+                        <i class="fas fa-file-export text-lg"></i>
+                    </button>
+                    <button onclick="exportarTudo()" class="bg-indigo-600 text-white p-3 rounded-xl touch-target shadow-lg shadow-indigo-200" title="Exportar tudo">
+                        <i class="fas fa-download text-lg"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
 
-        <!-- ÁREA DE FILTROS -->
-        <div class="filters">
-            <div class="search-group">
-                <label for="busca">Buscar (título/artista)</label>
-                <input type="text" id="busca" placeholder="Digite...">
+        <!-- Barra de busca e filtro recolhível -->
+        <div class="px-4 pt-4">
+            <div class="flex items-center gap-2">
+                <div class="relative flex-1">
+                    <input type="text" id="search-input" placeholder="Buscar título, artista..."
+                           class="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base">
+                    <i class="fas fa-search absolute left-3 top-3.5 text-slate-400"></i>
+                </div>
+                <button id="toggleFilterBtn" class="bg-white border border-slate-200 text-slate-600 p-3 rounded-xl touch-target">
+                    <i class="fas fa-sliders-h text-lg"></i>
+                </button>
             </div>
 
-            <div class="row-dupla">
-                <div>
-                    <label for="genero">Gênero</label>
-                    <select id="genero">
-                        <option value="">Todos</option>
-                        <!-- Será preenchido via JS -->
-                    </select>
+            <!-- Painel de filtros (oculto inicialmente) -->
+            <div id="filterPanel" class="mt-3 hidden">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-bold mb-1 text-slate-500 uppercase tracking-wider">Status</label>
+                        <select id="status-filter" class="w-full bg-white border border-slate-200 rounded-xl py-3 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base">
+                            <option value="todos">Todos</option>
+                            <option value="not_stream" selected>⚪ Off Stream</option>
+                            <option value="on_stream">🟢 On Stream</option>
+                            <option value="digitalizada">🔵 Digitalizada</option>
+                            <option value="nao_pode_subir">🔴 Não pode subir</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold mb-1 text-slate-500 uppercase tracking-wider">Ordenar</label>
+                        <select id="sort-select" class="w-full bg-white border border-slate-200 rounded-xl py-3 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base">
+                            <option value="ano_desc">Ano (decrescente)</option>
+                            <option value="ano_asc">Ano (crescente)</option>
+                            <option value="titulo_asc">Título (A-Z)</option>
+                            <option value="titulo_desc">Título (Z-A)</option>
+                            <option value="artista_asc">Artista (A-Z)</option>
+                            <option value="artista_desc">Artista (Z-A)</option>
+                        </select>
+                    </div>
                 </div>
                 <div>
-                    <label for="limite">Limite</label>
-                    <select id="limite">
+                    <label class="block text-xs font-bold mb-1 text-slate-500 uppercase tracking-wider mt-2">Limite por página</label>
+                    <select id="limit-select" class="w-full bg-white border border-slate-200 rounded-xl py-3 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base">
+                        <option value="10">10</option>
+                        <option value="20" selected>20</option>
                         <option value="50">50</option>
-                        <option value="100" selected>100</option>
-                        <option value="500">500</option>
-                        <option value="1000">1000</option>
+                        <option value="100">100</option>
                     </select>
                 </div>
-            </div>
-
-            <div class="button-group">
-                <button class="btn" id="btnBuscar">🔍 Buscar</button>
-                <button class="btn btn-secondary" id="btnExportar">📥 Exportar CSV</button>
+                <button id="applyFilterBtn" class="w-full mt-2 bg-indigo-600 text-white px-4 py-3 rounded-xl font-bold text-base">
+                    <i class="fas fa-filter mr-2"></i> Aplicar
+                </button>
             </div>
         </div>
 
-        <!-- INFO DE RESULTADOS -->
-        <div class="result-info">
-            <span id="resultadosTexto">Resultados</span>
-            <span id="contador">0</span>
+        <!-- Container dos cards -->
+        <div class="px-4 pt-4 pb-24">
+            <div id="tapes-cards-container" class="space-y-3">
+                <!-- Aqui serão inseridos os cards via JavaScript -->
+                <div class="p-8 text-center text-slate-400">Carregando...</div>
+            </div>
         </div>
 
-        <!-- INDICADOR DE LOADING -->
-        <div id="loading" class="loading">Carregando</div>
-
-        <!-- CARDS (mobile) -->
-        <div id="cardsContainer" class="cards-container"></div>
-
-        <!-- TABELA (desktop) -->
-        <div id="tableContainer" class="table-container">
-            <table id="tabela">
-                <thead>
-                    <tr>
-                        <th>Título</th>
-                        <th>Artista</th>
-                        <th>Ano</th>
-                        <th>Gravadora</th>
-                        <th>Gênero</th>
-                        <th>Formato</th>
-                    </tr>
-                </thead>
-                <tbody id="tabelaBody">
-                    <!-- preenchido via js -->
-                </tbody>
-            </table>
+        <!-- Paginação compacta -->
+        <div class="fixed bottom-16 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 flex items-center justify-between shadow-lg z-10">
+            <button id="prev-page" class="p-3 px-4 rounded-xl border border-slate-200 bg-white text-slate-600 font-bold disabled:opacity-40 transition-all text-sm touch-target">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <span class="text-sm text-slate-500">
+                <span id="current-page" class="font-bold text-slate-900">1</span> / <span id="total-pages" class="font-bold text-slate-900">1</span>
+            </span>
+            <button id="next-page" class="p-3 px-4 rounded-xl border border-slate-200 bg-white text-slate-600 font-bold disabled:opacity-40 transition-all text-sm touch-target">
+                <i class="fas fa-chevron-right"></i>
+            </button>
         </div>
 
-        <!-- mensagem sem resultados -->
-        <div id="semResultados" class="sem-resultados hide">Nenhum resultado encontrado.</div>
+        <!-- BOTTOM NAVIGATION (fixa) -->
+        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center py-2 px-4 bottom-nav-shadow z-20">
+            <a href="#" class="flex flex-col items-center text-slate-500">
+                <i class="fas fa-chart-pie text-xl"></i>
+                <span class="text-[10px] font-bold mt-1">Dashboard</span>
+            </a>
+            <a href="#" class="flex flex-col items-center text-indigo-600">
+                <i class="fas fa-layer-group text-xl"></i>
+                <span class="text-[10px] font-bold mt-1">Catálogo</span>
+            </a>
+            <a href="#" class="flex flex-col items-center text-slate-500">
+                <i class="fas fa-file-alt text-xl"></i>
+                <span class="text-[10px] font-bold mt-1">Relatórios</span>
+            </a>
+        </nav>
 
-        <footer>
-            Dados de catálogo musical • consulta direta ao Supabase
-        </footer>
+        <!-- FLOATING ACTION BUTTON (apenas visual) -->
+        <a href="#" class="fixed bottom-24 right-4 bg-indigo-600 text-white p-4 rounded-full shadow-lg z-30 touch-target flex items-center justify-center">
+            <i class="fas fa-plus text-2xl"></i>
+        </a>
     </div>
 
     <!-- Supabase JS via CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
-        // ==================== CONFIGURAÇÃO ====================
-        // 🔧 Dados do seu projeto Supabase (já preenchidos)
+        // ==================== CONFIGURAÇÃO SUPABASE ====================
         const SUPABASE_URL = 'https://edabpftowxcyvsmuzzdf.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
-
-        // Inicializa o cliente Supabase
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // ==================== ESTADO GLOBAL ====================
-        let ultimosDados = [];
-        let generosUnicos = [];
+        let currentPage = 1;
+        let totalPages = 1;
+        let limit = 20; // valor inicial (será sobrescrito pelo select)
+        let currentData = []; // armazena os dados da última busca (para exportação)
+        let selectedIds = new Set(); // IDs selecionados
 
         // Elementos DOM
-        const buscaInput = document.getElementById('busca');
-        const generoSelect = document.getElementById('genero');
-        const limiteSelect = document.getElementById('limite');
-        const btnBuscar = document.getElementById('btnBuscar');
-        const btnExportar = document.getElementById('btnExportar');
-        const cardsContainer = document.getElementById('cardsContainer');
-        const tabelaBody = document.getElementById('tabelaBody');
-        const loadingDiv = document.getElementById('loading');
-        const semResultadosDiv = document.getElementById('semResultados');
-        const contadorSpan = document.getElementById('contador');
-        const resultadosTexto = document.getElementById('resultadosTexto');
+        const cardsContainer = document.getElementById('tapes-cards-container');
+        const searchInput = document.getElementById('search-input');
+        const statusFilter = document.getElementById('status-filter');
+        const sortSelect = document.getElementById('sort-select');
+        const limitSelect = document.getElementById('limit-select');
+        const toggleFilterBtn = document.getElementById('toggleFilterBtn');
+        const filterPanel = document.getElementById('filterPanel');
+        const applyFilterBtn = document.getElementById('applyFilterBtn');
+        const prevBtn = document.getElementById('prev-page');
+        const nextBtn = document.getElementById('next-page');
+        const currentPageSpan = document.getElementById('current-page');
+        const totalPagesSpan = document.getElementById('total-pages');
 
         // ==================== FUNÇÕES AUXILIARES ====================
-        function mostrarLoading(mostrar) {
-            if (mostrar) {
-                loadingDiv.classList.add('active');
-                cardsContainer.innerHTML = '';
-                tabelaBody.innerHTML = '';
-                semResultadosDiv.classList.add('hide');
-            } else {
-                loadingDiv.classList.remove('active');
-            }
+        function parseSort(value) {
+            const [col, order] = value.split('_');
+            return { col, order };
         }
 
-        function atualizarContador(total) {
-            contadorSpan.textContent = total;
-            resultadosTexto.textContent = total === 1 ? '1 resultado' : total + ' resultados';
+        function buildStatus(item) {
+            // Determina o status baseado nos booleanos
+            if (item.subiu_streaming === true) return { cls: 'bg-emerald-50 text-emerald-700 border-emerald-100', txt: 'On Stream' };
+            if (item.digitalizada === true) return { cls: 'bg-sky-50 text-sky-700 border-sky-100', txt: 'Digitalizada' };
+            if (item.nao_pode_subir === true) return { cls: 'bg-rose-50 text-rose-700 border-rose-100', txt: 'Não pode subir' };
+            return { cls: 'bg-slate-100 text-slate-700 border-slate-200', txt: 'Off Stream' };
         }
 
-        // ==================== BUSCAR DADOS (SUPABASE) ====================
-        async function buscarDados() {
-            const termo = buscaInput.value.trim();
-            const genero = generoSelect.value;
-            const limite = parseInt(limiteSelect.value, 10);
-
-            mostrarLoading(true);
-
-            try {
-                let query = supabase
-                    .from('tapes')
-                    .select('*')
-                    .order('ano', { ascending: false })
-                    .limit(limite);
-
-                if (genero) {
-                    query = query.eq('genero', genero);
-                }
-
-                if (termo !== '') {
-                    // busca por título ou artista (ilike)
-                    query = query.or(`titulo.ilike.%${termo}%,artista.ilike.%${termo}%`);
-                }
-
-                const { data, error } = await query;
-
-                if (error) {
-                    console.error('Erro na consulta:', error);
-                    alert('Erro ao buscar dados: ' + error.message);
-                    mostrarLoading(false);
-                    return;
-                }
-
-                ultimosDados = data || [];
-
-                const total = ultimosDados.length;
-                atualizarContador(total);
-
-                if (total === 0) {
-                    cardsContainer.innerHTML = '';
-                    tabelaBody.innerHTML = '';
-                    semResultadosDiv.classList.remove('hide');
-                } else {
-                    semResultadosDiv.classList.add('hide');
-                    renderCards(ultimosDados);
-                    renderTabela(ultimosDados);
-                }
-
-                // Popula gêneros se ainda não foi feito
-                if (generosUnicos.length === 0) {
-                    await carregarGeneros();
-                }
-
-            } catch (err) {
-                console.error('Erro inesperado:', err);
-                alert('Erro inesperado. Ver console.');
-            } finally {
-                mostrarLoading(false);
-            }
-        }
-
-        // ==================== RENDERIZAÇÃO CARDS ====================
-        function renderCards(dados) {
-            let html = '';
-            dados.forEach(item => {
-                html += `
-                    <div class="card">
-                        <div class="card-titulo">${escapeHTML(item.titulo) || '—'}</div>
-                        <div class="card-artista">${escapeHTML(item.artista) || '—'}</div>
-                        <div class="card-detalhes">
-                            <div class="card-detalhe">
-                                <span class="card-detalhe-label">Ano</span>
-                                <span class="card-detalhe-valor">${item.ano || '—'}</span>
-                            </div>
-                            <div class="card-detalhe">
-                                <span class="card-detalhe-label">Gravadora</span>
-                                <span class="card-detalhe-valor">${escapeHTML(item.gravadora) || '—'}</span>
-                            </div>
-                            <div class="card-detalhe">
-                                <span class="card-detalhe-label">Gênero</span>
-                                <span class="card-detalhe-valor">${escapeHTML(item.genero) || '—'}</span>
-                            </div>
-                            <div class="card-detalhe">
-                                <span class="card-detalhe-label">Formato</span>
-                                <span class="card-detalhe-valor">${escapeHTML(item.formato) || '—'}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            cardsContainer.innerHTML = html;
-        }
-
-        // ==================== RENDERIZAÇÃO TABELA ====================
-        function renderTabela(dados) {
-            let linhas = '';
-            dados.forEach(item => {
-                linhas += `
-                    <tr>
-                        <td>${escapeHTML(item.titulo) || '—'}</td>
-                        <td>${escapeHTML(item.artista) || '—'}</td>
-                        <td>${item.ano || '—'}</td>
-                        <td>${escapeHTML(item.gravadora) || '—'}</td>
-                        <td>${escapeHTML(item.genero) || '—'}</td>
-                        <td>${escapeHTML(item.formato) || '—'}</td>
-                    </tr>
-                `;
-            });
-            tabelaBody.innerHTML = linhas;
-        }
-
-        // ==================== CARREGAR GÊNEROS PARA O SELECT ====================
-        async function carregarGeneros() {
-            try {
-                const { data, error } = await supabase
-                    .from('tapes')
-                    .select('genero')
-                    .not('genero', 'is', null);
-
-                if (error) {
-                    console.warn('Não foi possível carregar gêneros:', error);
-                    return;
-                }
-
-                const generos = [...new Set(data.map(item => item.genero).filter(g => g))].sort();
-
-                generosUnicos = generos;
-
-                let options = '<option value="">Todos</option>';
-                generos.forEach(g => {
-                    options += `<option value="${escapeHTML(g)}">${escapeHTML(g)}</option>`;
-                });
-                generoSelect.innerHTML = options;
-            } catch (e) {
-                console.warn('Erro ao carregar gêneros:', e);
-            }
-        }
-
-        // ==================== EXPORTAR CSV ====================
-        function exportarCSV() {
-            if (ultimosDados.length === 0) {
-                alert('Nenhum dado para exportar. Faça uma busca primeiro.');
-                return;
-            }
-
-            const cabecalho = ['id', 'titulo', 'artista', 'ano', 'gravadora', 'genero', 'formato'];
-
-            const linhas = ultimosDados.map(item => [
-                item.id,
-                item.titulo,
-                item.artista,
-                item.ano,
-                item.gravadora,
-                item.genero,
-                item.formato
-            ]);
-
-            const escapeCSV = (campo) => {
-                if (campo === null || campo === undefined) return '';
-                let str = String(campo);
-                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-                    str = str.replace(/"/g, '""');
-                    return `"${str}"`;
-                }
-                return str;
-            };
-
-            const cabecalhoEscapado = cabecalho.map(escapeCSV).join(',');
-            const linhasEscapadas = linhas.map(linha => linha.map(escapeCSV).join(','));
-            const csvConteudo = [cabecalhoEscapado, ...linhasEscapadas].join('\n');
-
-            const blob = new Blob([csvConteudo], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.href = url;
-            link.setAttribute('download', 'tapes.csv');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        }
-
-        // ==================== ESCAPAR HTML ====================
-        function escapeHTML(texto) {
-            if (!texto) return '';
-            return String(texto)
+        function escapeHtml(text) {
+            if (!text) return '';
+            return String(text)
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
@@ -682,21 +710,232 @@
                 .replace(/'/g, '&#039;');
         }
 
-        // ==================== EVENTOS ====================
-        btnBuscar.addEventListener('click', buscarDados);
-        btnExportar.addEventListener('click', exportarCSV);
-        buscaInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                buscarDados();
+        // Atualiza o conjunto de selecionados quando um checkbox é alterado
+        function setupCheckboxListeners() {
+            document.querySelectorAll('.card-checkbox').forEach(cb => {
+                cb.addEventListener('change', (e) => {
+                    const id = e.target.value;
+                    if (e.target.checked) {
+                        selectedIds.add(id);
+                    } else {
+                        selectedIds.delete(id);
+                    }
+                });
+            });
+        }
+
+        // ==================== BUSCAR DADOS NO SUPABASE ====================
+        async function carregarTapes() {
+            cardsContainer.innerHTML = '<div class="p-8 text-center text-slate-400 animate-pulse">Carregando...</div>';
+
+            try {
+                const termo = searchInput.value.trim();
+                const status = statusFilter.value;
+                const { col, order } = parseSort(sortSelect.value);
+                limit = parseInt(limitSelect.value, 10);
+
+                // Monta a consulta base
+                let query = supabase
+                    .from('tapes')
+                    .select('*', { count: 'exact' })
+                    .order(col, { ascending: order === 'asc' })
+                    .range((currentPage - 1) * limit, currentPage * limit - 1);
+
+                // Filtro de busca (título ou artista)
+                if (termo) {
+                    query = query.or(`titulo.ilike.%${termo}%,artista.ilike.%${termo}%`);
+                }
+
+                // Filtro de status (baseado nos booleanos)
+                if (status !== 'todos') {
+                    if (status === 'on_stream') {
+                        query = query.eq('subiu_streaming', true);
+                    } else if (status === 'digitalizada') {
+                        query = query.eq('digitalizada', true);
+                    } else if (status === 'nao_pode_subir') {
+                        query = query.eq('nao_pode_subir', true);
+                    } else if (status === 'not_stream') {
+                        query = query.is('subiu_streaming', false).is('digitalizada', false).is('nao_pode_subir', false);
+                    }
+                }
+
+                const { data, error, count } = await query;
+
+                if (error) {
+                    console.error('Erro na consulta:', error);
+                    cardsContainer.innerHTML = '<div class="p-8 text-center text-rose-500 font-bold">Erro ao carregar dados.</div>';
+                    return;
+                }
+
+                // Atualiza estado
+                currentData = data || [];
+                const totalRegistros = count || 0;
+                totalPages = Math.ceil(totalRegistros / limit);
+                if (currentPage > totalPages) currentPage = totalPages || 1;
+
+                currentPageSpan.textContent = currentPage;
+                totalPagesSpan.textContent = totalPages || 1;
+                prevBtn.disabled = currentPage <= 1;
+                nextBtn.disabled = currentPage >= totalPages;
+
+                if (!currentData.length) {
+                    cardsContainer.innerHTML = '<div class="p-8 text-center text-slate-400">Nenhum tape encontrado.</div>';
+                    return;
+                }
+
+                renderCards(currentData);
+            } catch (err) {
+                console.error(err);
+                cardsContainer.innerHTML = '<div class="p-8 text-center text-rose-500 font-bold">Erro inesperado.</div>';
             }
+        }
+
+        // ==================== RENDERIZAR CARDS ====================
+        function renderCards(tapes) {
+            let html = '';
+            tapes.forEach(t => {
+                const status = buildStatus(t);
+                const artistaNome = t.artista || '-';
+                const gravadoraNome = t.gravadora || '';
+                const numeroTape = t.numero_tape || `#${t.id}`;
+
+                html += `
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+                        <div class="flex items-start gap-3">
+                            <!-- Checkbox para seleção -->
+                            <input type="checkbox" class="card-checkbox check-tape mt-1" value="${t.id}" ${selectedIds.has(String(t.id)) ? 'checked' : ''}>
+
+                            <div class="flex-1 min-w-0">
+                                <!-- Linha superior: título e badge -->
+                                <div class="flex items-start gap-2">
+                                    <div class="flex-1 min-w-0">
+                                        <h3 class="text-base font-bold text-slate-900 truncate">${escapeHtml(t.titulo) || '---'}</h3>
+                                        <p class="text-sm text-slate-600 truncate">${escapeHtml(artistaNome)}</p>
+                                    </div>
+                                    <span class="flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${status.cls} whitespace-nowrap">
+                                        ${status.txt}
+                                    </span>
+                                </div>
+
+                                <!-- Linha de metadados (número e gravadora) -->
+                                <div class="flex items-center gap-2 mt-2 text-xs text-slate-400">
+                                    <span><i class="fas fa-hashtag mr-1"></i>${numeroTape}</span>
+                                    ${gravadoraNome ? `<span><i class="fas fa-building mr-1"></i>${escapeHtml(gravadoraNome)}</span>` : ''}
+                                    ${t.ano ? `<span><i class="far fa-calendar mr-1"></i>${t.ano}</span>` : ''}
+                                </div>
+
+                                <!-- Gênero e formato extras (opcional) -->
+                                <div class="flex flex-wrap gap-2 mt-2 text-xs text-slate-500">
+                                    ${t.genero ? `<span class="bg-slate-100 px-2 py-1 rounded-full">${escapeHtml(t.genero)}</span>` : ''}
+                                    ${t.formato ? `<span class="bg-slate-100 px-2 py-1 rounded-full">${escapeHtml(t.formato)}</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            cardsContainer.innerHTML = html;
+            setupCheckboxListeners(); // reaplica os listeners nos novos checkboxes
+        }
+
+        // ==================== EXPORTAÇÃO CSV ====================
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function arrayToCSV(data) {
+            if (!data.length) return '';
+            const headers = ['id', 'titulo', 'artista', 'ano', 'gravadora', 'genero', 'formato', 'subiu_streaming', 'digitalizada', 'nao_pode_subir'];
+            const escapeCSV = (field) => {
+                if (field === null || field === undefined) return '';
+                let str = String(field);
+                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                    str = str.replace(/"/g, '""');
+                    return `"${str}"`;
+                }
+                return str;
+            };
+            const headerLine = headers.map(escapeCSV).join(',');
+            const lines = data.map(item => headers.map(h => escapeCSV(item[h])).join(','));
+            return [headerLine, ...lines].join('\n');
+        }
+
+        function exportarSelecionados() {
+            if (selectedIds.size === 0) {
+                alert('Selecione ao menos um item.');
+                return;
+            }
+            const dadosSelecionados = currentData.filter(item => selectedIds.has(String(item.id)));
+            const csv = arrayToCSV(dadosSelecionados);
+            downloadCSV(csv, 'tapes_selecionados.csv');
+        }
+
+        function exportarTudo() {
+            if (!currentData.length) {
+                alert('Nenhum dado carregado para exportar.');
+                return;
+            }
+            const csv = arrayToCSV(currentData);
+            downloadCSV(csv, 'tapes_completo.csv');
+        }
+
+        // ==================== EVENTOS ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inicializa com a primeira página
+            carregarTapes();
+
+            // Toggle do painel de filtros
+            toggleFilterBtn.addEventListener('click', () => {
+                filterPanel.classList.toggle('hidden');
+            });
+
+            // Aplicar filtros
+            applyFilterBtn.addEventListener('click', () => {
+                filterPanel.classList.add('hidden');
+                currentPage = 1;
+                carregarTapes();
+            });
+
+            // Buscar ao pressionar Enter
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    currentPage = 1;
+                    carregarTapes();
+                }
+            });
+
+            // Paginação
+            prevBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    carregarTapes();
+                }
+            });
+            nextBtn.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    carregarTapes();
+                }
+            });
+
+            // Quando mudar o limite, reinicia para página 1
+            limitSelect.addEventListener('change', () => {
+                currentPage = 1;
+                carregarTapes();
+            });
         });
 
-        // ==================== INICIALIZAÇÃO ====================
-        window.addEventListener('load', () => {
-            carregarGeneros();
-            buscarDados();
-        });
+        // Disponibiliza funções globalmente para os botões de exportação
+        window.exportarSelecionados = exportarSelecionados;
+        window.exportarTudo = exportarTudo;
     </script>
 </body>
 </html>
