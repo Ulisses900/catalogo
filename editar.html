@@ -164,7 +164,7 @@
             supabaseClient.from('artistas').select('id, nome').order('nome'),
             supabaseClient.from('gravadoras').select('id, nome').order('nome'),
             supabaseClient.from('etiquetas').select('id, nome').order('nome'),
-            supabaseClient.from('tipo_midia').select('id, nome').order('nome')
+            supabaseClient.from('tipos_midia').select('id, nome').order('nome')
         ]);
 
         if (artistasRes.error) throw artistasRes.error;
