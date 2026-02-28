@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Tape</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-50/50">
+
+<div class="min-h-screen p-4 md:p-8" id="app">
+    <div class="max-w-7xl mx-auto">
+        <!-- Navegação (preenchida via JS) -->
+        <nav class="flex items-center text-xs font-bold text-slate-400 mb-4 uppercase tracking-widest" id="breadcrumb"></nav>
+
+        <!-- Cabeçalho com ações -->
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <div>
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight" id="titulo"></h1>
+                <p class="text-slate-500 text-sm mt-1" id="artista-gravadora"></p>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="#" class="inline-flex items-center px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 shadow-sm transition-all" id="edit-btn">
+                    <i class="fas fa-edit mr-2 text-indigo-500"></i> Editar
+                </a>
+                <button onclick="history.back()" class="inline-flex items-center px-4 py-2.5 bg-indigo-600 rounded-xl text-sm font-bold text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all">
+                    <i class="fas fa-arrow-left mr-2"></i> Voltar
+                </button>
+            </div>
+        </div>
+
+        <!-- Cards de informação -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Card Informações Gerais -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <div class="flex items-center gap-3 text-indigo-600 mb-3">
+                    <i class="fas fa-info-circle text-xl"></i>
+                    <h2 class="font-extrabold text-sm uppercase tracking-wider text-slate-400">Informações Gerais</h2>
+                </div>
+                <div class="space-y-2 text-sm" id="info-geral"></div>
+            </div>
+
+            <!-- Card Artista/Gravadora -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <div class="flex items-center gap-3 text-indigo-600 mb-3">
+                    <i class="fas fa-microphone-alt text-xl"></i>
+                    <h2 class="font-extrabold text-sm uppercase tracking-wider text-slate-400">Artista / Gravadora</h2>
+                </div>
+                <div class="space-y-2 text-sm" id="info-artista"></div>
+            </div>
+
+            <!-- Card Estatísticas -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <div class="flex items-center gap-3 text-indigo-600 mb-3">
+                    <i class="fas fa-music text-xl"></i>
+                    <h2 class="font-extrabold text-sm uppercase tracking-wider text-slate-400">Estatísticas</h2>
+                </div>
+                <div class="space-y-2 text-sm" id="info-estatisticas"></div>
+            </div>
+        </div>
+
+        <!-- Lista de Faixas -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+                <h2 class="font-extrabold text-sm uppercase tracking-wider text-slate-400">
+                    <i class="fas fa-list-music mr-2 text-indigo-500"></i> Faixas do Tape
+                </h2>
+                <span class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full font-bold" id="faixas-count">0 faixas</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-50">
+                    <thead class="bg-slate-50/50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">#</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">Lado</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">Música</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">Autor</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">Editora</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">Percentual</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50" id="faixas-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Observações -->
+        <div class="mt-6 bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hidden" id="observacoes-container">
+            <h3 class="font-extrabold text-sm uppercase tracking-wider text-slate-400 mb-3">
+                <i class="fas fa-sticky-note mr-2 text-indigo-500"></i> Observações
+            </h3>
+            <p class="text-sm text-slate-700 whitespace-pre-line" id="observacoes"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = 'https://edabpftowxcyvsmuzzdf.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const tapeId = urlParams.get('id');
+
+    if (!tapeId) {
+        window.location.href = 'index.html'; // ou sua página de listagem
+    }
+
+    async function carregarDados() {
+        try {
+            // Busca tape com artista e gravadora
+            const { data: tape, error } = await supabase
+                .from('tapes')
+                .select(`
+                    *,
+                    artistas ( nome ),
+                    gravadoras ( nome )
+                `)
+                .eq('id', tapeId)
+                .single();
+
+            if (error) throw error;
+
+            // Busca faixas do tape
+            const { data: faixas, error: faixasError } = await supabase
+                .from('faixas')
+                .select('*')
+                .eq('tape_id', tapeId)
+                .order('numero', { ascending: true });
+
+            if (faixasError) throw faixasError;
+
+            preencherPagina(tape, faixas || []);
+        } catch (err) {
+            console.error(err);
+            alert('Erro ao carregar dados: ' + err.message);
+        }
+    }
+
+    function preencherPagina(tape, faixas) {
+        // Breadcrumb
+        document.getElementById('breadcrumb').innerHTML = `
+            <a href="index.html" class="hover:text-indigo-600 transition">Dashboard</a>
+            <i class="fas fa-chevron-right mx-2 text-[10px]"></i>
+            <a href="index.html" class="hover:text-indigo-600 transition">Catálogo de Tapes</a>
+            <i class="fas fa-chevron-right mx-2 text-[10px]"></i>
+            <span class="text-indigo-600">Detalhes do Tape #${tape.id}</span>
+        `;
+
+        // Título e artista/gravadora
+        document.getElementById('titulo').textContent = tape.titulo || 'Sem título';
+        document.getElementById('artista-gravadora').innerHTML = `
+            ${tape.artistas?.nome || 'Artista não informado'} • ${tape.gravadoras?.nome || 'Gravadora não informada'}
+        `;
+
+        // Link de editar
+        document.getElementById('edit-btn').href = `editar.html?id=${tape.id}`;
+
+        // Informações Gerais
+        const statusMap = {
+            'on_stream': '🟢 On Stream',
+            'not_stream': '🔴 Restrito',
+            'digitalizada': '🔵 Digitalizada',
+            'nao_subiu': '⚪ Pendente'
+        };
+        const statusClasse = {
+            'on_stream': 'bg-emerald-50 text-emerald-700 border-emerald-100',
+            'not_stream': 'bg-rose-50 text-rose-700 border-rose-100',
+            'digitalizada': 'bg-sky-50 text-sky-700 border-sky-100',
+            'nao_subiu': 'bg-slate-100 text-slate-600 border-slate-200'
+        };
+        const status = tape.status || '';
+        document.getElementById('info-geral').innerHTML = `
+            <p><span class="font-bold text-slate-500">Nº do Tape:</span> <span class="text-slate-900">${tape.numero_tape || '---'}</span></p>
+            <p><span class="font-bold text-slate-500">Status:</span>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${statusClasse[status] || 'bg-slate-100 text-slate-600 border-slate-200'}">
+                    ${statusMap[status] || 'Pendente'}
+                </span>
+            </p>
+            <p><span class="font-bold text-slate-500">Ano:</span> ${tape.ano || '---'}</p>
+            <p><span class="font-bold text-slate-500">País:</span> ${tape.pais || '---'}</p>
+        `;
+
+        // Artista/Gravadora
+        document.getElementById('info-artista').innerHTML = `
+            <p><span class="font-bold text-slate-500">Artista:</span> ${tape.artistas?.nome || '---'}</p>
+            <p><span class="font-bold text-slate-500">Gravadora:</span> ${tape.gravadoras?.nome || '---'}</p>
+            ${tape.artistas?.bio ? `<p class="mt-3 text-slate-600 italic">${tape.artistas.bio.substring(0, 100)}...</p>` : ''}
+        `;
+
+        // Estatísticas
+        const ladosUnicos = [...new Set(faixas.map(f => f.lado))];
+        document.getElementById('info-estatisticas').innerHTML = `
+            <p><span class="font-bold text-slate-500">Total de faixas:</span> ${faixas.length}</p>
+            <p><span class="font-bold text-slate-500">Lados encontrados:</span> ${ladosUnicos.length} <span class="text-slate-400 text-xs">(${ladosUnicos.join(', ') || '---'})</span></p>
+            <p><span class="font-bold text-slate-500">Gênero principal:</span> ${tape.genero || '---'}</p>
+        `;
+
+        // Faixas
+        const tbody = document.getElementById('faixas-tbody');
+        if (faixas.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-12 text-center text-slate-400">Nenhuma faixa cadastrada para este tape.</td></tr>`;
+        } else {
+            tbody.innerHTML = faixas.map(f => `
+                <tr class="hover:bg-indigo-50/40 transition-colors">
+                    <td class="px-6 py-3 text-sm font-mono text-slate-400">${f.numero || '-'}</td>
+                    <td class="px-6 py-3 text-sm font-bold text-slate-700">${f.lado || '---'}</td>
+                    <td class="px-6 py-3 text-sm font-extrabold text-slate-900">${f.musica || '---'}</td>
+                    <td class="px-6 py-3 text-sm text-slate-600">${f.autor || '---'}</td>
+                    <td class="px-6 py-3 text-sm text-slate-600">${f.editora || '---'}</td>
+                    <td class="px-6 py-3 text-sm text-slate-700">
+                        ${f.percentual ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-slate-100 border border-slate-200 text-slate-700">${f.percentual}%</span>` : '---'}
+                    </td>
+                </tr>
+            `).join('');
+        }
+        document.getElementById('faixas-count').textContent = faixas.length + ' faixas';
+
+        // Observações
+        if (tape.observacoes) {
+            document.getElementById('observacoes-container').classList.remove('hidden');
+            document.getElementById('observacoes').textContent = tape.observacoes;
+        }
+    }
+
+    carregarDados();
+</script>
+</body>
+</html>
