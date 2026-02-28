@@ -11,7 +11,13 @@
 <body class="bg-slate-50/50">
 
 <div class="max-w-5xl mx-auto py-6 px-4">
-    <h1 class="text-2xl font-semibold mb-4" id="page-title">Editar Tape</h1>
+    <!-- Cabeçalho com botão Voltar -->
+    <div class="flex items-center justify-between mb-4">
+        <h1 class="text-2xl font-semibold" id="page-title">Editar Tape</h1>
+        <button onclick="history.back()" class="px-4 py-2 border rounded-lg text-sm flex items-center gap-2 hover:bg-slate-100">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </button>
+    </div>
 
     <form id="tapeForm" class="space-y-6" onsubmit="return false;">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -115,15 +121,16 @@
 
         <div class="flex gap-3 mt-6">
             <button id="saveBtn" class="px-4 py-2 bg-blue-600 text-white rounded">Salvar</button>
-            <a href="#" id="cancelBtn" class="px-4 py-2 border rounded">Cancelar</a>
+            <button type="button" onclick="history.back()" class="px-4 py-2 border rounded">Cancelar</button>
         </div>
     </form>
 </div>
 
 <script>
+    // CORREÇÃO: usar supabaseClient em vez de supabase para evitar conflito com variável global
     const SUPABASE_URL = 'https://edabpftowxcyvsmuzzdf.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const urlParams = new URLSearchParams(window.location.search);
     const tapeId = urlParams.get('id');
@@ -154,10 +161,10 @@
     // Carregar listas para selects
     async function carregarListas() {
         const [artistasRes, gravadorasRes, etiquetasRes, tiposRes] = await Promise.all([
-            supabase.from('artistas').select('id, nome').order('nome'),
-            supabase.from('gravadoras').select('id, nome').order('nome'),
-            supabase.from('etiquetas').select('id, nome').order('nome'),
-            supabase.from('tipo_midia').select('id, nome').order('nome')
+            supabaseClient.from('artistas').select('id, nome').order('nome'),
+            supabaseClient.from('gravadoras').select('id, nome').order('nome'),
+            supabaseClient.from('etiquetas').select('id, nome').order('nome'),
+            supabaseClient.from('tipo_midia').select('id, nome').order('nome')
         ]);
 
         if (artistasRes.error) throw artistasRes.error;
@@ -185,9 +192,9 @@
         });
     }
 
-    // Carregar dados do tape e faixas
+    // Carregar dados do tape
     async function carregarTape() {
-        const { data: tape, error } = await supabase
+        const { data: tape, error } = await supabaseClient
             .from('tapes')
             .select('*')
             .eq('id', tapeId)
@@ -195,7 +202,6 @@
 
         if (error) throw error;
 
-        // Preencher campos
         tituloInput.value = tape.titulo || '';
         numeroTapeInput.value = tape.numero_tape || '';
         artistaSelect.value = tape.artista_id || '';
@@ -211,11 +217,11 @@
         observacoesTextarea.value = tape.observacoes || '';
 
         document.getElementById('page-title').textContent = `Editar Tape — ${tape.titulo || 'Sem título'}`;
-        document.getElementById('cancelBtn').href = `ver.html?id=${tape.id}`;
     }
 
+    // Carregar faixas
     async function carregarFaixas() {
-        const { data: faixas, error } = await supabase
+        const { data: faixas, error } = await supabaseClient
             .from('faixas')
             .select('*')
             .eq('tape_id', tapeId)
@@ -229,8 +235,7 @@
     function renderizarLinhasFaixas(faixas) {
         faixasTbody.innerHTML = '';
         if (faixas.length === 0) {
-            // Linha vazia para facilitar adição
-            adicionarLinhaFaixa();
+            adicionarLinhaFaixa(); // uma linha vazia para começar
         } else {
             faixas.forEach(f => adicionarLinhaFaixa(f));
         }
@@ -286,7 +291,7 @@
         };
 
         // Atualizar tape
-        const { error: updateError } = await supabase
+        const { error: updateError } = await supabaseClient
             .from('tapes')
             .update(tapePayload)
             .eq('id', tapeId);
@@ -319,7 +324,7 @@
         const idsExistentes = faixasExistentes.map(f => f.id);
         const idsParaDeletar = idsExistentes.filter(id => !idsEnviados.has(id));
         if (idsParaDeletar.length > 0) {
-            const { error: deleteError } = await supabase
+            const { error: deleteError } = await supabaseClient
                 .from('faixas')
                 .delete()
                 .in('id', idsParaDeletar);
@@ -330,7 +335,7 @@
         for (const faixa of faixasParaSalvar) {
             if (faixa.id) {
                 // Update
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('faixas')
                     .update({
                         numero: faixa.numero,
@@ -345,7 +350,7 @@
                 if (error) throw error;
             } else {
                 // Insert
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('faixas')
                     .insert({
                         tape_id: faixa.tape_id,
