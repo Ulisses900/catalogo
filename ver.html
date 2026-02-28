@@ -99,7 +99,8 @@
 <script>
     const SUPABASE_URL = 'https://edabpftowxcyvsmuzzdf.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Usar um nome diferente para evitar conflito com a variável global 'supabase'
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const urlParams = new URLSearchParams(window.location.search);
     const tapeId = urlParams.get('id');
@@ -111,7 +112,7 @@
     async function carregarDados() {
         try {
             // Busca tape com artista e gravadora
-            const { data: tape, error } = await supabase
+            const { data: tape, error } = await supabaseClient
                 .from('tapes')
                 .select(`
                     *,
@@ -124,7 +125,7 @@
             if (error) throw error;
 
             // Busca faixas do tape
-            const { data: faixas, error: faixasError } = await supabase
+            const { data: faixas, error: faixasError } = await supabaseClient
                 .from('faixas')
                 .select('*')
                 .eq('tape_id', tapeId)
