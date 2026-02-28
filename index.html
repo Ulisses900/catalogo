@@ -35,12 +35,13 @@
     </header>
 
     <main class="px-4 pt-6">
-        <div id="tapes-cards-container" class="grid gap-4">
+        <!-- Container com estilo de tabela responsiva -->
+        <div id="tapes-list-container" class="space-y-2">
             <div class="p-20 text-center text-slate-400 italic">Carregando catálogo...</div>
         </div>
     </main>
 
-    <!-- Paginação (escondida quando não há registros) -->
+    <!-- Paginação -->
     <div id="pagination-bar" class="fixed bottom-16 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-100 px-6 py-4 flex items-center justify-between z-10">
         <button id="prev-page" aria-label="Página anterior" class="w-12 h-12 rounded-2xl border border-slate-200 flex items-center justify-center disabled:opacity-20 active:bg-slate-50">
             <i class="fas fa-chevron-left text-slate-600"></i>
@@ -60,23 +61,20 @@
 </div>
 
 <script>
-    // ATENÇÃO: Esta chave anônima é segura apenas se as políticas de segurança (RLS) estiverem ativas no Supabase.
-    // Verifique se as tabelas têm RLS configurado para restringir acesso a dados não autorizados.
     const SUPABASE_URL = 'https://edabpftowxcyvsmuzzdf.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let currentPage = 1;
-    const limit = 10;
+    const limit = 30; // Agora 30 itens por página
     let totalPages = 1;
 
     async function carregarTapes() {
-        const container = document.getElementById('tapes-cards-container');
+        const container = document.getElementById('tapes-list-container');
         
         try {
             const termo = document.getElementById('search-input').value.trim();
 
-            // Montagem da query base
             let query = supabaseClient
                 .from('tapes')
                 .select(`
@@ -87,7 +85,6 @@
 
             // Busca por título ou nome do artista
             if (termo) {
-                // Primeiro, obtém IDs de artistas que correspondem ao termo
                 const { data: artistMatches, error: artistError } = await supabaseClient
                     .from('artistas')
                     .select('id')
@@ -98,29 +95,23 @@
                 const artistIds = artistMatches.map(a => a.id);
 
                 if (artistIds.length > 0) {
-                    // Filtra por título ou por artista_id na lista de IDs encontrados
                     query = query.or(`titulo.ilike.%${termo}%,artista_id.in.(${artistIds.join(',')})`);
                 } else {
-                    // Apenas busca por título
                     query = query.ilike('titulo', `%${termo}%`);
                 }
             }
 
-            // Executa a consulta com paginação
             const { data, error, count } = await query
-                .order('titulo', { ascending: true }) // ordenação mais amigável
+                .order('titulo', { ascending: true })
                 .range((currentPage - 1) * limit, currentPage * limit - 1);
 
             if (error) throw error;
 
-            // Atualiza contador total
             document.getElementById('total-records').textContent = count || 0;
-
-            // Calcula total de páginas (0 se não houver registros)
             totalPages = count > 0 ? Math.ceil(count / limit) : 0;
             
             atualizarInterface();
-            renderizarCards(data || []);
+            renderizarLista(data || []);
 
         } catch (err) {
             console.error(err);
@@ -128,51 +119,50 @@
         }
     }
 
-    function renderizarCards(tapes) {
-        const container = document.getElementById('tapes-cards-container');
+    function renderizarLista(tapes) {
+        const container = document.getElementById('tapes-list-container');
         if (!tapes || tapes.length === 0) {
             container.innerHTML = '<div class="p-20 text-center text-slate-400">Nenhum resultado encontrado.</div>';
             return;
         }
 
-        container.innerHTML = tapes.map(t => {
-            // Fallback para "Desconhecido" quando não há artista/gravadora
-            const nomeArtista = t.artistas?.nome || 'Desconhecido';
-            const nomeGravadora = t.gravadoras?.nome || 'Desconhecida';
-
-            return `
-                <div class="bg-white rounded-[2rem] p-6 border border-slate-100 card-shadow">
-                    <div class="flex flex-col gap-4">
-                        <div class="flex justify-between items-start">
-                            <div class="flex-1">
-                                <h3 class="text-lg font-black text-slate-900 leading-none mb-1">${t.titulo || 'SEM TÍTULO'}</h3>
-                                <p class="text-indigo-600 font-bold text-sm tracking-tight">${nomeArtista}</p>
+        // Estrutura de lista (tabela vertical) com linhas
+        container.innerHTML = `
+            <div class="bg-slate-100 rounded-t-2xl px-4 py-2 text-[10px] font-black text-slate-500 uppercase tracking-wider flex justify-between">
+                <span class="w-5/12">Título / Artista</span>
+                <span class="w-3/12 text-center">Gravadora</span>
+                <span class="w-2/12 text-center">Nº</span>
+                <span class="w-2/12 text-center">Ações</span>
+            </div>
+            <div class="space-y-2">
+                ${tapes.map(t => {
+                    const nomeArtista = t.artistas?.nome || 'Desconhecido';
+                    const nomeGravadora = t.gravadoras?.nome || 'Desconhecida';
+                    return `
+                        <div class="bg-white rounded-2xl p-3 border border-slate-100 card-shadow flex items-center justify-between">
+                            <div class="w-5/12">
+                                <h3 class="font-black text-sm text-slate-900 leading-tight">${t.titulo || 'SEM TÍTULO'}</h3>
+                                <p class="text-indigo-600 font-bold text-xs">${nomeArtista}</p>
                             </div>
-                            <span class="text-[10px] font-black bg-slate-100 text-slate-500 px-2 py-1 rounded-lg">#${t.id}</span>
-                        </div>
-
-                        <div class="flex items-center gap-4 py-3 border-y border-slate-50">
-                            <div class="flex-1">
-                                <p class="text-[9px] uppercase font-black text-slate-400 tracking-widest">Gravadora</p>
-                                <p class="text-xs font-bold text-slate-700 truncate">${nomeGravadora}</p>
+                            <div class="w-3/12 text-center">
+                                <span class="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-1 rounded-full">${nomeGravadora.substring(0, 8)}${nomeGravadora.length > 8 ? '…' : ''}</span>
                             </div>
-                            <div class="w-px h-6 bg-slate-100"></div>
-                            <div class="flex-1">
-                                <p class="text-[9px] uppercase font-black text-slate-400 tracking-widest">Nº Tape</p>
-                                <p class="text-xs font-bold text-slate-700">${t.numero_tape || '-'}</p>
+                            <div class="w-2/12 text-center">
+                                <span class="text-xs font-bold text-slate-800">${t.numero_tape || '-'}</span>
+                            </div>
+                            <div class="w-2/12 flex justify-end gap-1">
+                                <a href="ver.html?id=${t.id}" class="bg-indigo-100 text-indigo-700 w-8 h-8 rounded-xl flex items-center justify-center" title="Detalhes">
+                                    <i class="fas fa-eye text-xs"></i>
+                                </a>
+                                <a href="editar.html?id=${t.id}" class="bg-slate-100 text-slate-500 w-8 h-8 rounded-xl flex items-center justify-center" title="Editar">
+                                    <i class="fas fa-pen text-xs"></i>
+                                </a>
                             </div>
                         </div>
-
-                        <div class="flex gap-2">
-                            <a href="ver.html?id=${t.id}" class="flex-1 bg-indigo-600 text-white text-[11px] font-black py-3 rounded-2xl text-center shadow-lg shadow-indigo-100 active:scale-95 transition-all">DETALHES</a>
-                            <a href="editar.html?id=${t.id}" class="w-12 bg-slate-50 text-slate-400 flex items-center justify-center rounded-2xl active:bg-slate-100">
-                                <i class="fas fa-pen text-xs"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }).join('');
+                    `;
+                }).join('')}
+            </div>
+        `;
     }
 
     function atualizarInterface() {
@@ -220,7 +210,6 @@
         }
     };
 
-    // Carrega os tapes ao iniciar
     carregarTapes();
 </script>
 
