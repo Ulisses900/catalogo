@@ -663,7 +663,9 @@
         // ==================== CONFIGURAÇÃO SUPABASE ====================
         const SUPABASE_URL = 'https://edabpftowxcyvsmuzzdf.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Criamos um cliente com nome diferente para não conflitar com a variável global "supabase"
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // ==================== ESTADO GLOBAL ====================
         let currentPage = 1;
@@ -735,7 +737,7 @@
                 limit = parseInt(limitSelect.value, 10);
 
                 // Monta a consulta base
-                let query = supabase
+                let query = supabaseClient
                     .from('tapes')
                     .select('*', { count: 'exact' })
                     .order(col, { ascending: order === 'asc' })
@@ -755,6 +757,7 @@
                     } else if (status === 'nao_pode_subir') {
                         query = query.eq('nao_pode_subir', true);
                     } else if (status === 'not_stream') {
+                        // Off Stream: nenhum dos booleanos verdadeiros
                         query = query.is('subiu_streaming', false).is('digitalizada', false).is('nao_pode_subir', false);
                     }
                 }
