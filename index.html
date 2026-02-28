@@ -4,14 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>Catálogo de Tapes</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
         body { background-color: #f8fafc; min-height: 100vh; }
         .touch-target { min-height: 44px; min-width: 44px; }
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 80px); }
+        .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 120px); }
         .bottom-nav-shadow { box-shadow: 0 -4px 12px rgba(0,0,0,0.05); }
+        
+        /* Custom Checkbox */
         .card-checkbox {
             appearance: none; -webkit-appearance: none; width: 24px; height: 24px;
             border: 2px solid #cbd5e1; border-radius: 8px; background: white;
@@ -22,16 +27,16 @@
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z'/%3E%3C/svg%3E");
             background-size: 16px; background-position: center; background-repeat: no-repeat;
         }
-        .hidden { display: none !important; }
+        
         .breadcrumb { display: flex; align-items: center; font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
         .breadcrumb span:last-child { color: #4f46e5; }
         .breadcrumb i { font-size: 8px; margin: 0 0.5rem; }
     </style>
 </head>
 <body>
+
 <div class="min-h-screen bg-slate-50/50 pb-safe">
-    <!-- Cabeçalho -->
-    <div class="bg-white border-b border-slate-200 px-4 pt-6 pb-4">
+    <header class="bg-white border-b border-slate-200 px-4 pt-6 pb-4 sticky top-0 z-40">
         <div class="breadcrumb">
             <span>Dashboard</span>
             <i class="fas fa-chevron-right"></i>
@@ -40,36 +45,35 @@
         <div class="flex items-center justify-between">
             <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Acervo</h1>
             <div class="flex gap-2">
-                <button onclick="exportarSelecionados()" class="bg-white border border-slate-200 text-slate-700 p-3 rounded-xl touch-target" title="Exportar seleção">
+                <button onclick="exportarSelecionados()" class="bg-white border border-slate-200 text-slate-700 p-3 rounded-xl touch-target shadow-sm active:bg-slate-50">
                     <i class="fas fa-file-export text-lg"></i>
                 </button>
-                <button onclick="exportarTudo()" class="bg-indigo-600 text-white p-3 rounded-xl touch-target shadow-lg shadow-indigo-200" title="Exportar tudo">
+                <button onclick="exportarTudo()" class="bg-indigo-600 text-white p-3 rounded-xl touch-target shadow-lg shadow-indigo-200 active:bg-indigo-700">
                     <i class="fas fa-download text-lg"></i>
                 </button>
             </div>
         </div>
-    </div>
+    </header>
 
-    <!-- Busca e filtros -->
     <div class="px-4 pt-4">
         <div class="flex items-center gap-2">
             <div class="relative flex-1">
                 <input type="text" id="search-input" placeholder="Buscar título, artista..."
-                       class="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base">
+                       class="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base shadow-sm">
                 <i class="fas fa-search absolute left-3 top-3.5 text-slate-400"></i>
             </div>
-            <button id="toggleFilterBtn" class="bg-white border border-slate-200 text-slate-600 p-3 rounded-xl touch-target">
+            <button id="toggleFilterBtn" class="bg-white border border-slate-200 text-slate-600 p-3 rounded-xl touch-target shadow-sm">
                 <i class="fas fa-sliders-h text-lg"></i>
             </button>
         </div>
 
-        <div id="filterPanel" class="mt-3 hidden">
-            <div class="grid grid-cols-2 gap-2">
+        <div id="filterPanel" class="mt-3 hidden bg-white p-4 rounded-xl border border-slate-200 shadow-md">
+            <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block text-xs font-bold mb-1 text-slate-500 uppercase tracking-wider">Status</label>
-                    <select id="status-filter" class="w-full bg-white border border-slate-200 rounded-xl py-3 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base">
+                    <select id="status-filter" class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-2 text-sm focus:ring-2 focus:ring-indigo-500">
                         <option value="todos">Todos</option>
-                        <option value="not_stream" selected>⚪ Off Stream</option>
+                        <option value="not_stream">⚪ Off Stream</option>
                         <option value="on_stream">🟢 On Stream</option>
                         <option value="digitalizada">🔵 Digitalizada</option>
                         <option value="nao_pode_subir">🔴 Não pode subir</option>
@@ -77,45 +81,40 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold mb-1 text-slate-500 uppercase tracking-wider">Ordenar</label>
-                    <select id="sort-select" class="w-full bg-white border border-slate-200 rounded-xl py-3 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-base">
-                        <option value="id_desc">ID (decrescente)</option>
-                        <option value="id_asc">ID (crescente)</option>
+                    <select id="sort-select" class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2 px-2 text-sm">
+                        <option value="id_desc">ID (Recente)</option>
+                        <option value="id_asc">ID (Antigo)</option>
                         <option value="titulo_asc">Título (A-Z)</option>
-                        <option value="titulo_desc">Título (Z-A)</option>
                         <option value="artista_asc">Artista (A-Z)</option>
-                        <option value="artista_desc">Artista (Z-A)</option>
                     </select>
                 </div>
             </div>
-            <button id="applyFilterBtn" class="w-full mt-2 bg-indigo-600 text-white px-4 py-3 rounded-xl font-bold text-base">
-                <i class="fas fa-filter mr-2"></i> Aplicar
+            <button id="applyFilterBtn" class="w-full mt-4 bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-md active:scale-[0.98] transition-transform">
+                Aplicar Filtros
             </button>
         </div>
     </div>
 
-    <!-- Container dos cards -->
-    <div class="px-4 pt-4 pb-24">
+    <main class="px-4 pt-4">
         <div id="tapes-cards-container" class="space-y-3">
-            <div class="p-8 text-center text-slate-400">Carregando...</div>
+            <div class="p-8 text-center text-slate-400">Carregando acervo...</div>
         </div>
-    </div>
+    </main>
 
-    <!-- Paginação -->
-    <div class="fixed bottom-16 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 flex items-center justify-between shadow-lg z-10">
-        <button id="prev-page" class="p-3 px-4 rounded-xl border border-slate-200 bg-white text-slate-600 font-bold disabled:opacity-40 transition-all text-sm touch-target">
-            <i class="fas fa-chevron-left"></i>
+    <div class="fixed bottom-16 left-0 right-0 bg-white border-t border-slate-200 px-6 py-3 flex items-center justify-between shadow-lg z-10">
+        <button id="prev-page" class="p-2 px-4 rounded-lg border border-slate-200 text-slate-600 disabled:opacity-30 touch-target font-bold">
+            <i class="fas fa-chevron-left mr-1"></i> Ant
         </button>
-        <span class="text-sm text-slate-500">
-            <span id="current-page" class="font-bold text-slate-900">1</span> / <span id="total-pages" class="font-bold text-slate-900">1</span>
+        <span class="text-sm font-medium text-slate-500">
+            Pág. <span id="current-page" class="text-slate-900 font-bold">1</span> de <span id="total-pages" class="text-slate-900 font-bold">1</span>
         </span>
-        <button id="next-page" class="p-3 px-4 rounded-xl border border-slate-200 bg-white text-slate-600 font-bold disabled:opacity-40 transition-all text-sm touch-target">
-            <i class="fas fa-chevron-right"></i>
+        <button id="next-page" class="p-2 px-4 rounded-lg border border-slate-200 text-slate-600 disabled:opacity-30 touch-target font-bold">
+            Prox <i class="fas fa-chevron-right ml-1"></i>
         </button>
     </div>
 
-    <!-- Bottom Navigation (fixa) -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center py-2 px-4 bottom-nav-shadow z-20">
-        <a href="#" class="flex flex-col items-center text-slate-500">
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center py-2 bottom-nav-shadow z-20">
+        <a href="#" class="flex flex-col items-center text-slate-400">
             <i class="fas fa-chart-pie text-xl"></i>
             <span class="text-[10px] font-bold mt-1">Dashboard</span>
         </a>
@@ -123,167 +122,116 @@
             <i class="fas fa-layer-group text-xl"></i>
             <span class="text-[10px] font-bold mt-1">Catálogo</span>
         </a>
-        <a href="#" class="flex flex-col items-center text-slate-500">
+        <a href="#" class="flex flex-col items-center text-slate-400">
             <i class="fas fa-file-alt text-xl"></i>
             <span class="text-[10px] font-bold mt-1">Relatórios</span>
         </a>
     </nav>
 
-    <!-- FAB para adicionar -->
-    <a href="adicionar.html" class="fixed bottom-24 right-4 bg-indigo-600 text-white p-4 rounded-full shadow-lg z-30 touch-target flex items-center justify-center">
-        <i class="fas fa-plus text-2xl"></i>
+    <a href="adicionar.html" class="fixed bottom-28 right-4 bg-indigo-600 text-white w-14 h-14 rounded-full shadow-2xl z-30 flex items-center justify-center active:scale-90 transition-transform">
+        <i class="fas fa-plus text-xl"></i>
     </a>
 </div>
 
 <script>
-    // ==================== CONFIGURAÇÃO SUPABASE ====================
+    // Configurações Supabase
     const SUPABASE_URL = 'https://edabpftowxcyvsmuzzdf.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
-    // Usar um nome diferente para a instância, pois 'supabase' já é uma variável global definida pelo script
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // Inicialização correta (V2)
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ==================== ESTADO GLOBAL ====================
+    // Estado
     let currentPage = 1;
     let totalPages = 1;
-    let limit = 20;
+    const limit = 10;
     let currentData = [];
     let selectedIds = new Set();
 
-    // Elementos DOM
+    // Elementos
     const cardsContainer = document.getElementById('tapes-cards-container');
     const searchInput = document.getElementById('search-input');
     const statusFilter = document.getElementById('status-filter');
     const sortSelect = document.getElementById('sort-select');
-    const toggleFilterBtn = document.getElementById('toggleFilterBtn');
     const filterPanel = document.getElementById('filterPanel');
-    const applyFilterBtn = document.getElementById('applyFilterBtn');
-    const prevBtn = document.getElementById('prev-page');
-    const nextBtn = document.getElementById('next-page');
-    const currentPageSpan = document.getElementById('current-page');
-    const totalPagesSpan = document.getElementById('total-pages');
 
-    // ==================== FUNÇÕES AUXILIARES ====================
-    function parseSort(value) {
-        const [col, order] = value.split('_');
-        return { col, order };
-    }
-
-    function buildStatus(item) {
-        if (item.subiu_streaming === true) return { cls: 'bg-emerald-50 text-emerald-700 border-emerald-100', txt: 'On Stream' };
-        if (item.digitalizada === true) return { cls: 'bg-sky-50 text-sky-700 border-sky-100', txt: 'Digitalizada' };
-        if (item.nao_pode_subir === true) return { cls: 'bg-rose-50 text-rose-700 border-rose-100', txt: 'Não pode subir' };
-        return { cls: 'bg-slate-100 text-slate-700 border-slate-200', txt: 'Off Stream' };
-    }
-
-    function escapeHtml(text) {
-        if (!text) return '';
-        return String(text)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
-
-    function setupCheckboxListeners() {
-        document.querySelectorAll('.card-checkbox').forEach(cb => {
-            cb.addEventListener('change', (e) => {
-                const id = e.target.value;
-                if (e.target.checked) selectedIds.add(id);
-                else selectedIds.delete(id);
-            });
-        });
-    }
-
-    // ==================== BUSCAR DADOS NO SUPABASE ====================
     async function carregarTapes() {
-        cardsContainer.innerHTML = '<div class="p-8 text-center text-slate-400 animate-pulse">Carregando...</div>';
+        cardsContainer.innerHTML = '<div class="p-12 text-center text-slate-400 animate-pulse"><i class="fas fa-spinner fa-spin text-2xl mb-2"></i><br>Buscando dados...</div>';
 
         try {
             const termo = searchInput.value.trim();
             const status = statusFilter.value;
-            const { col, order } = parseSort(sortSelect.value);
+            const [col, order] = sortSelect.value.split('_');
 
             let query = supabaseClient
                 .from('tapes')
-                .select('*', { count: 'exact' })
-                .order(col, { ascending: order === 'asc' })
-                .range((currentPage - 1) * limit, currentPage * limit - 1);
+                .select('*', { count: 'exact' });
 
+            // Filtro de Busca
             if (termo) {
                 query = query.or(`titulo.ilike.%${termo}%,artista.ilike.%${termo}%`);
             }
 
+            // Filtro de Status
             if (status !== 'todos') {
                 if (status === 'on_stream') query = query.eq('subiu_streaming', true);
                 else if (status === 'digitalizada') query = query.eq('digitalizada', true);
                 else if (status === 'nao_pode_subir') query = query.eq('nao_pode_subir', true);
                 else if (status === 'not_stream') {
-                    query = query.is('subiu_streaming', false).is('digitalizada', false).is('nao_pode_subir', false);
+                    query = query.eq('subiu_streaming', false).eq('digitalizada', false).eq('nao_pode_subir', false);
                 }
             }
 
-            const { data, error, count } = await query;
+            // Ordenação e Paginação
+            const { data, error, count } = await query
+                .order(col, { ascending: order === 'asc' })
+                .range((currentPage - 1) * limit, currentPage * limit - 1);
 
-            if (error) {
-                console.error('Erro na consulta:', error);
-                cardsContainer.innerHTML = '<div class="p-8 text-center text-rose-500 font-bold">Erro ao carregar dados.</div>';
-                return;
-            }
+            if (error) throw error;
 
             currentData = data || [];
-            const totalRegistros = count || 0;
-            totalPages = Math.ceil(totalRegistros / limit);
-            if (currentPage > totalPages) currentPage = totalPages || 1;
-
-            currentPageSpan.textContent = currentPage;
-            totalPagesSpan.textContent = totalPages || 1;
-            prevBtn.disabled = currentPage <= 1;
-            nextBtn.disabled = currentPage >= totalPages;
-
-            if (!currentData.length) {
-                cardsContainer.innerHTML = '<div class="p-8 text-center text-slate-400">Nenhum tape encontrado.</div>';
-                return;
-            }
-
+            totalPages = Math.ceil((count || 0) / limit);
+            
+            atualizarInterfacePagina(count);
             renderCards(currentData);
+
         } catch (err) {
-            console.error(err);
-            cardsContainer.innerHTML = '<div class="p-8 text-center text-rose-500 font-bold">Erro inesperado.</div>';
+            console.error('Erro:', err);
+            cardsContainer.innerHTML = `<div class="p-8 text-center text-red-500 font-bold">Erro ao carregar: ${err.message}</div>`;
         }
     }
 
     function renderCards(tapes) {
-        let html = '';
-        tapes.forEach(t => {
-            const status = buildStatus(t);
-            const artistaNome = t.artista || '-';
-            const gravadoraNome = t.gravadora || '';
-            const numeroTape = t.numero_tape || `#${t.id}`;
+        if (tapes.length === 0) {
+            cardsContainer.innerHTML = '<div class="p-12 text-center text-slate-400 italic">Nenhum resultado encontrado.</div>';
+            return;
+        }
 
-            html += `
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+        cardsContainer.innerHTML = tapes.map(t => {
+            const status = getStatusBadge(t);
+            return `
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 transition-all active:bg-slate-50">
                     <div class="flex items-start gap-3">
-                        <input type="checkbox" class="card-checkbox check-tape mt-1" value="${t.id}" ${selectedIds.has(String(t.id)) ? 'checked' : ''}>
+                        <input type="checkbox" class="card-checkbox" value="${t.id}" ${selectedIds.has(String(t.id)) ? 'checked' : ''} onchange="toggleSelect('${t.id}')">
                         <div class="flex-1 min-w-0">
-                            <div class="flex items-start gap-2">
-                                <div class="flex-1 min-w-0">
-                                    <h3 class="text-base font-bold text-slate-900 truncate">${escapeHtml(t.titulo) || '---'}</h3>
-                                    <p class="text-sm text-slate-600 truncate">${escapeHtml(artistaNome)}</p>
+                            <div class="flex justify-between items-start gap-2">
+                                <div class="truncate">
+                                    <h3 class="text-base font-bold text-slate-900 truncate">${t.titulo || 'Sem título'}</h3>
+                                    <p class="text-sm text-slate-500 truncate">${t.artista || 'Artista desconhecido'}</p>
                                 </div>
-                                <span class="flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${status.cls} whitespace-nowrap">
+                                <span class="px-2 py-1 rounded-md text-[10px] font-bold border ${status.cls} whitespace-nowrap">
                                     ${status.txt}
                                 </span>
                             </div>
-                            <div class="flex items-center gap-2 mt-2 text-xs text-slate-400">
-                                <span><i class="fas fa-hashtag mr-1"></i>${numeroTape}</span>
-                                ${gravadoraNome ? `<span><i class="fas fa-building mr-1"></i>${escapeHtml(gravadoraNome)}</span>` : ''}
+                            <div class="flex items-center gap-3 mt-3 text-[11px] text-slate-400">
+                                <span><i class="fas fa-hashtag mr-1"></i>${t.numero_tape || t.id}</span>
+                                ${t.gravadora ? `<span><i class="fas fa-compact-disc mr-1"></i>${t.gravadora}</span>` : ''}
                             </div>
-                            <div class="flex gap-2 mt-3">
-                                <a href="ver.html?id=${t.id}" class="flex-1 flex items-center justify-center gap-1 p-2 bg-indigo-50 text-indigo-700 rounded-xl text-xs font-bold touch-target">
-                                    <i class="fas fa-eye"></i> Ver
+                            <div class="flex gap-2 mt-4">
+                                <a href="ver.html?id=${t.id}" class="flex-1 bg-indigo-50 text-indigo-700 py-2 rounded-lg text-xs font-bold text-center touch-target flex items-center justify-center gap-1">
+                                    <i class="fas fa-eye"></i> Detalhes
                                 </a>
-                                <a href="editar.html?id=${t.id}" class="flex-1 flex items-center justify-center gap-1 p-2 bg-amber-50 text-amber-700 rounded-xl text-xs font-bold touch-target">
+                                <a href="editar.html?id=${t.id}" class="flex-1 bg-amber-50 text-amber-700 py-2 rounded-lg text-xs font-bold text-center touch-target flex items-center justify-center gap-1">
                                     <i class="fas fa-edit"></i> Editar
                                 </a>
                             </div>
@@ -291,99 +239,66 @@
                     </div>
                 </div>
             `;
-        });
-        cardsContainer.innerHTML = html;
-        setupCheckboxListeners();
+        }).join('');
     }
 
-    // ==================== EXPORTAÇÃO CSV ====================
-    function downloadCSV(csv, filename) {
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.href = url;
-        link.setAttribute('download', filename);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+    function getStatusBadge(item) {
+        if (item.subiu_streaming) return { cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', txt: 'ON STREAM' };
+        if (item.digitalizada) return { cls: 'bg-blue-50 text-blue-700 border-blue-200', txt: 'DIGITALIZADA' };
+        if (item.nao_pode_subir) return { cls: 'bg-red-50 text-red-700 border-red-200', txt: 'BLOQUEADA' };
+        return { cls: 'bg-slate-50 text-slate-500 border-slate-200', txt: 'OFF STREAM' };
     }
 
-    function arrayToCSV(data) {
-        if (!data.length) return '';
-        const headers = ['id', 'titulo', 'artista', 'gravadora', 'genero', 'formato', 'subiu_streaming', 'digitalizada', 'nao_pode_subir'];
-        const escapeCSV = (field) => {
-            if (field === null || field === undefined) return '';
-            let str = String(field);
-            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-                str = str.replace(/"/g, '""');
-                return `"${str}"`;
-            }
-            return str;
-        };
-        const headerLine = headers.map(escapeCSV).join(',');
-        const lines = data.map(item => headers.map(h => escapeCSV(item[h])).join(','));
-        return [headerLine, ...lines].join('\n');
+    function toggleSelect(id) {
+        if (selectedIds.has(id)) selectedIds.delete(id);
+        else selectedIds.add(id);
     }
 
-    function exportarSelecionados() {
-        if (selectedIds.size === 0) {
-            alert('Selecione ao menos um item.');
-            return;
-        }
-        const dadosSelecionados = currentData.filter(item => selectedIds.has(String(item.id)));
-        const csv = arrayToCSV(dadosSelecionados);
-        downloadCSV(csv, 'tapes_selecionados.csv');
+    function atualizarInterfacePagina(total) {
+        document.getElementById('current-page').textContent = currentPage;
+        document.getElementById('total-pages').textContent = totalPages || 1;
+        document.getElementById('prev-page').disabled = currentPage <= 1;
+        document.getElementById('next-page').disabled = currentPage >= totalPages;
     }
 
-    function exportarTudo() {
-        if (!currentData.length) {
-            alert('Nenhum dado carregado para exportar.');
-            return;
-        }
-        const csv = arrayToCSV(currentData);
-        downloadCSV(csv, 'tapes_completo.csv');
-    }
+    // Exportação
+    window.exportarTudo = () => {
+        const csv = "ID,Titulo,Artista\n" + currentData.map(r => `${r.id},"${r.titulo}","${r.artista}"`).join("\n");
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'catalogo_completo.csv';
+        a.click();
+    };
 
-    // ==================== EVENTOS ====================
-    document.addEventListener('DOMContentLoaded', () => {
+    window.exportarSelecionados = () => {
+        if(selectedIds.size === 0) return alert("Selecione itens primeiro");
+        const filtrados = currentData.filter(r => selectedIds.has(String(r.id)));
+        const csv = "ID,Titulo,Artista\n" + filtrados.map(r => `${r.id},"${r.titulo}","${r.artista}"`).join("\n");
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'selecao.csv';
+        a.click();
+    };
+
+    // Eventos
+    document.getElementById('toggleFilterBtn').onclick = () => filterPanel.classList.toggle('hidden');
+    document.getElementById('applyFilterBtn').onclick = () => {
+        currentPage = 1;
+        filterPanel.classList.add('hidden');
         carregarTapes();
+    };
+    document.getElementById('prev-page').onclick = () => { if(currentPage > 1) { currentPage--; carregarTapes(); } };
+    document.getElementById('next-page').onclick = () => { if(currentPage < totalPages) { currentPage++; carregarTapes(); } };
+    
+    searchInput.onkeypress = (e) => { if(e.key === 'Enter') { currentPage = 1; carregarTapes(); } };
 
-        toggleFilterBtn.addEventListener('click', () => {
-            filterPanel.classList.toggle('hidden');
-        });
-
-        applyFilterBtn.addEventListener('click', () => {
-            filterPanel.classList.add('hidden');
-            currentPage = 1;
-            carregarTapes();
-        });
-
-        searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                currentPage = 1;
-                carregarTapes();
-            }
-        });
-
-        prevBtn.addEventListener('click', () => {
-            if (currentPage > 1) {
-                currentPage--;
-                carregarTapes();
-            }
-        });
-
-        nextBtn.addEventListener('click', () => {
-            if (currentPage < totalPages) {
-                currentPage++;
-                carregarTapes();
-            }
-        });
-    });
-
-    // Disponibiliza funções globalmente para os botões
-    window.exportarSelecionados = exportarSelecionados;
-    window.exportarTudo = exportarTudo;
+    // Iniciar
+    carregarTapes();
 </script>
+
 </body>
 </html>
