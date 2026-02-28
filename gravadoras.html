@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Somax Studios | Gestão de Gravadoras</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="menu.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .filter-active {
+            background-color: #4f46e5 !important;
+            color: white !important;
+            border-color: #4f46e5 !important;
+        }
+        .modal-open { overflow: hidden; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+    <main class="md:ml-64 min-h-screen">
+        <div id="header-container"></div>
+
+        <div class="p-8">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight uppercase">Gravadoras</h1>
+                    <p class="text-slate-500 text-sm italic">Gestão de selos e editoras fonográficas.</p>
+                </div>
+                <div class="bg-white border border-slate-200 px-4 py-2 rounded-lg text-sm font-bold text-slate-700 shadow-sm">
+                    TOTAL: <span id="total-count" class="text-indigo-600">0</span> SELOS
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Buscar Gravadora</label>
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            <input type="text" id="search-input" placeholder="Digite o nome da gravadora..." 
+                                   class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ordem Alfabética</label>
+                        <div class="flex gap-2">
+                            <button id="sort-az" class="filter-active flex-1 py-2 rounded-lg border text-[10px] font-bold uppercase transition-all flex items-center justify-center gap-2">
+                                <i class="fas fa-sort-alpha-down"></i> A-Z
+                            </button>
+                            <button id="sort-za" class="flex-1 py-2 rounded-lg border text-[10px] font-bold uppercase hover:bg-slate-50 transition-all flex items-center justify-center gap-2 text-slate-600">
+                                <i class="fas fa-sort-alpha-up"></i> Z-A
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 border-b border-slate-200 text-[10px] uppercase font-bold text-slate-500">
+                            <tr>
+                                <th class="px-6 py-4">ID</th>
+                                <th class="px-6 py-4">Nome da Gravadora / Selo</th>
+                                <th class="px-6 py-4 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gravadoras-container" class="divide-y divide-slate-100 text-sm italic">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="modal-gravadora" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onclick="fecharModal()"></div>
+        
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="p-6 border-b border-slate-100">
+                <h3 class="text-lg font-black uppercase text-slate-800">Editar Gravadora</h3>
+                <p class="text-slate-400 text-xs italic">A alteração afetará todos os tapes vinculados.</p>
+            </div>
+            
+            <div class="p-6">
+                <input type="hidden" id="edit-id">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nome da Gravadora</label>
+                    <input type="text" id="edit-nome" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+            </div>
+
+            <div class="p-6 bg-slate-50 flex gap-3">
+                <button onclick="fecharModal()" class="flex-1 py-3 text-[10px] font-black uppercase text-slate-500 hover:text-slate-700 transition-all">Cancelar</button>
+                <button id="btn-salvar" onclick="salvarAlteracoes()" class="flex-[2] bg-indigo-600 text-white py-3 rounded-xl text-[10px] font-black uppercase hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
+                    Salvar Alterações
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://edabpftowxcyvsmuzzdf.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let isAscending = true;
+
+        async function carregarGravadoras() {
+            const container = document.getElementById('gravadoras-container');
+            container.innerHTML = '<tr><td colspan="3" class="py-12 text-center text-slate-400 italic">Sincronizando selos...</td></tr>';
+
+            try {
+                const busca = document.getElementById('search-input').value.trim();
+                let query = supabaseClient.from('gravadoras').select('*', { count: 'exact' });
+
+                if (busca) query = query.ilike('nome', `%${busca}%`);
+
+                const { data, count, error } = await query.order('nome', { ascending: isAscending });
+
+                if (error) throw error;
+
+                document.getElementById('total-count').innerText = count || 0;
+                renderizarTabela(data || []);
+
+            } catch (err) {
+                container.innerHTML = '<tr><td colspan="3" class="py-12 text-center text-red-500 font-bold uppercase text-xs">Erro de comunicação.</td></tr>';
+            }
+        }
+
+        function renderizarTabela(gravadoras) {
+            const container = document.getElementById('gravadoras-container');
+            if (gravadoras.length === 0) {
+                container.innerHTML = '<tr><td colspan="3" class="py-12 text-center text-slate-400 uppercase text-xs italic">Nenhuma gravadora encontrada.</td></tr>';
+                return;
+            }
+
+            container.innerHTML = gravadoras.map(g => `
+                <tr class="hover:bg-indigo-50/40 transition-colors group">
+                    <td class="px-6 py-4 font-mono text-[10px] text-slate-400">#${g.id}</td>
+                    <td class="px-6 py-4">
+                        <span class="font-black text-slate-900 uppercase text-[12px] tracking-tight group-hover:text-indigo-600 transition-colors">
+                            ${g.nome || '---'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <button onclick="abrirModal('${g.id}', '${g.nome}')" class="p-2 text-slate-300 hover:text-amber-600 transition-all" title="Editar Gravadora">
+                            <i class="fas fa-edit text-[11px]"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // --- LÓGICA DE ORDENAÇÃO ---
+
+        document.getElementById('sort-az').onclick = function() {
+            isAscending = true;
+            this.classList.add('filter-active');
+            document.getElementById('sort-za').classList.remove('filter-active');
+            carregarGravadoras();
+        };
+
+        document.getElementById('sort-za').onclick = function() {
+            isAscending = false;
+            this.classList.add('filter-active');
+            document.getElementById('sort-az').classList.remove('filter-active');
+            carregarGravadoras();
+        };
+
+        // --- MODAL DE EDIÇÃO ---
+
+        function abrirModal(id, nome) {
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-nome').value = nome;
+            document.getElementById('modal-gravadora').classList.remove('hidden');
+            document.body.classList.add('modal-open');
+        }
+
+        function fecharModal() {
+            document.getElementById('modal-gravadora').classList.add('hidden');
+            document.body.classList.remove('modal-open');
+        }
+
+        async function salvarAlteracoes() {
+            const btn = document.getElementById('btn-salvar');
+            const id = document.getElementById('edit-id').value;
+            const novoNome = document.getElementById('edit-nome').value.trim();
+
+            if (!novoNome) return alert("O nome é obrigatório.");
+
+            btn.disabled = true;
+            btn.innerText = "PROCESSANDO...";
+
+            try {
+                const { error } = await supabaseClient
+                    .from('gravadoras')
+                    .update({ nome: novoNome })
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                fecharModal();
+                carregarGravadoras();
+            } catch (err) {
+                alert("Erro ao atualizar: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "SALVAR ALTERAÇÕES";
+            }
+        }
+
+        // Busca com delay
+        let t;
+        document.getElementById('search-input').oninput = () => {
+            clearTimeout(t);
+            t = setTimeout(carregarGravadoras, 500);
+        };
+
+        carregarGravadoras();
+    </script>
+</body>
+</html>

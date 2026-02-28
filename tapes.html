@@ -2,216 +2,213 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Catálogo de Tapes Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Somax Studios | Gerenciar Tapes</title>
     
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="menu.js"></script>
+
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
-        body { background-color: #f8fafc; color: #1e293b; }
-        .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 120px); }
-        .card-shadow { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02); }
+        body { font-family: 'Inter', sans-serif; }
+        .filter-active {
+            background-color: #4f46e5 !important;
+            color: white !important;
+            border-color: #4f46e5 !important;
+        }
+        /* Efeito de destaque na linha ao passar o mouse */
+        tr:hover .action-btn { opacity: 1; }
     </style>
 </head>
-<body>
+<body class="bg-slate-50 text-slate-900">
 
-<div class="min-h-screen pb-safe">
-    <header class="bg-white border-b border-slate-200 px-6 pt-8 pb-6 sticky top-0 z-40">
-        <div class="flex items-center justify-between mb-4">
-            <h1 class="text-2xl font-black tracking-tight text-slate-900">Meu Acervo</h1>
-            <div class="bg-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg shadow-indigo-200">
-                <span id="total-records">0</span> TAPES
+    <main class="md:ml-64 min-h-screen">
+        <div id="header-container"></div>
+
+        <div class="p-8">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight uppercase">Gerenciar Tapes</h1>
+                    <p class="text-slate-500 text-sm italic">Painel de controle de acervo.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="bg-white border border-slate-200 px-4 py-2 rounded-lg text-sm font-bold text-slate-700 shadow-sm">
+                        TOTAL: <span id="total-records" class="text-indigo-600">0</span>
+                    </div>
+                    <a href="adicionar.html" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 uppercase">
+                        + Novo Registro
+                    </a>
+                </div>
             </div>
-        </div>
-        
-        <div class="relative">
-            <input type="text" id="search-input" placeholder="Buscar título ou artista..."
-                   class="w-full bg-slate-100 border-none rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-indigo-500 text-base transition-all">
-            <i class="fas fa-search absolute left-4 top-5 text-slate-400"></i>
-        </div>
-    </header>
 
-    <main class="px-4 pt-6">
-        <!-- Container com estilo de tabela responsiva -->
-        <div id="tapes-list-container" class="space-y-2">
-            <div class="p-20 text-center text-slate-400 italic">Carregando catálogo...</div>
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-6">
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Busca</label>
+                        <input type="text" id="search-input" placeholder="Título..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Gravadora</label>
+                        <select id="filter-gravadora" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"><option value="">Todas</option></select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Streaming</label>
+                        <div class="flex gap-1">
+                            <button onclick="setStatusFilter('all', this)" class="filter-active flex-1 py-2 rounded-lg border text-[10px] font-bold uppercase">Todos</button>
+                            <button onclick="setStatusFilter('on', this)" class="flex-1 py-2 rounded-lg border text-[10px] font-bold uppercase">On</button>
+                            <button onclick="setStatusFilter('off', this)" class="flex-1 py-2 rounded-lg border text-[10px] font-bold uppercase">Off</button>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase">Classificar</label>
+                        <div class="flex gap-1">
+                            <button id="sort-tape" class="sort-btn filter-active flex-1 py-2 rounded-lg border text-[10px] font-bold uppercase">Título</button>
+                            <button id="sort-artist" class="sort-btn flex-1 py-2 rounded-lg border text-[10px] font-bold uppercase">Artista</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 border-b border-slate-200 text-[10px] uppercase font-bold text-slate-500">
+                            <tr>
+                                <th class="px-6 py-4">Nº</th>
+                                <th class="px-6 py-4">Título</th>
+                                <th class="px-6 py-4">Artista</th>
+                                <th class="px-6 py-4">Status</th>
+                                <th class="px-6 py-4 text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tapes-list-container" class="divide-y divide-slate-100 text-sm italic">
+                            </tbody>
+                    </table>
+                </div>
+
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                    <div class="text-[11px] text-slate-500 font-medium">PÁGINA <span id="current-page">1</span></div>
+                    <div class="flex gap-2">
+                        <button id="prev-page" class="px-4 py-2 bg-white border border-slate-200 rounded-lg text-[10px] font-black hover:bg-slate-100 disabled:opacity-30">ANTERIOR</button>
+                        <button id="next-page" class="px-4 py-2 bg-white border border-slate-200 rounded-lg text-[10px] font-black hover:bg-slate-100 disabled:opacity-30">PRÓXIMA</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 
-    <!-- Paginação -->
-    <div id="pagination-bar" class="fixed bottom-16 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-100 px-6 py-4 flex items-center justify-between z-10">
-        <button id="prev-page" aria-label="Página anterior" class="w-12 h-12 rounded-2xl border border-slate-200 flex items-center justify-center disabled:opacity-20 active:bg-slate-50">
-            <i class="fas fa-chevron-left text-slate-600"></i>
-        </button>
-        <div class="text-center">
-            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Página</span>
-            <span class="text-sm font-bold text-slate-900"><span id="current-page">1</span> / <span id="total-pages">1</span></span>
-        </div>
-        <button id="next-page" aria-label="Próxima página" class="w-12 h-12 rounded-2xl border border-slate-200 flex items-center justify-center disabled:opacity-20 active:bg-slate-50">
-            <i class="fas fa-chevron-right text-slate-600"></i>
-        </button>
-    </div>
+    <script>
+        const SUPABASE_URL = 'https://edabpftowxcyvsmuzzdf.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    <a href="adicionar.html" aria-label="Adicionar novo tape" class="fixed bottom-32 right-6 bg-indigo-600 text-white w-14 h-14 rounded-2xl shadow-xl flex items-center justify-center active:scale-90 transition-transform z-30">
-        <i class="fas fa-plus text-xl"></i>
-    </a>
-</div>
+        let currentPage = 1;
+        const limit = 15;
+        let selectedStatus = 'all';
+        let selectedGravadora = '';
+        let currentSort = { column: 'titulo', table: null, ascending: true };
 
-<script>
-    const SUPABASE_URL = 'https://edabpftowxcyvsmuzzdf.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        async function carregarGravadorasSelect() {
+            const { data } = await supabaseClient.from('gravadoras').select('id, nome').order('nome');
+            const select = document.getElementById('filter-gravadora');
+            data?.forEach(g => select.add(new Option(g.nome, g.id)));
+        }
 
-    let currentPage = 1;
-    const limit = 30; // Agora 30 itens por página
-    let totalPages = 1;
+        async function carregarTapes() {
+            const container = document.getElementById('tapes-list-container');
+            container.innerHTML = '<tr><td colspan="5" class="py-12 text-center text-slate-400">Carregando...</td></tr>';
+            
+            try {
+                const busca = document.getElementById('search-input').value.trim();
+                let query = supabaseClient.from('tapes').select('*, artistas(nome), gravadoras(nome)', { count: 'exact' });
 
-    async function carregarTapes() {
-        const container = document.getElementById('tapes-list-container');
-        
-        try {
-            const termo = document.getElementById('search-input').value.trim();
+                if (busca) query = query.ilike('titulo', `%${busca}%`);
+                if (selectedGravadora) query = query.eq('gravadora_id', selectedGravadora);
+                if (selectedStatus === 'on') query = query.eq('subiu_streaming', true);
+                if (selectedStatus === 'off') query = query.eq('subiu_streaming', false);
 
-            let query = supabaseClient
-                .from('tapes')
-                .select(`
-                    *,
-                    artistas ( nome ),
-                    gravadoras ( nome )
-                `, { count: 'exact' });
+                const { data, count, error } = await query
+                    .order(currentSort.column, { ascending: currentSort.ascending, foreignTable: currentSort.table })
+                    .range((currentPage - 1) * limit, currentPage * limit - 1);
 
-            // Busca por título ou nome do artista
-            if (termo) {
-                const { data: artistMatches, error: artistError } = await supabaseClient
-                    .from('artistas')
-                    .select('id')
-                    .ilike('nome', `%${termo}%`);
+                if (error) throw error;
+                document.getElementById('total-records').textContent = count || 0;
+                renderizarTabela(data || []);
+                atualizarBotoes(count);
+            } catch (err) {
+                container.innerHTML = '<tr><td colspan="5" class="py-12 text-center text-red-500 font-bold">Erro ao carregar dados.</td></tr>';
+            }
+        }
 
-                if (artistError) throw artistError;
+        function renderizarTabela(tapes) {
+            const container = document.getElementById('tapes-list-container');
+            container.innerHTML = tapes.map(t => `
+                <tr class="hover:bg-slate-50/80 transition-colors group">
+                    <td class="px-6 py-4 font-mono text-[10px] text-slate-400">#${t.numero_tape || '-'}</td>
+                    <td class="px-6 py-4 font-black text-slate-900 uppercase text-[12px] tracking-tight">${t.titulo || '---'}</td>
+                    <td class="px-6 py-4 text-indigo-600 font-bold text-[11px] uppercase">${t.artistas?.nome || 'Desconhecido'}</td>
+                    <td class="px-6 py-4">
+                        ${t.subiu_streaming ? '<span class="text-emerald-600 font-black text-[9px] border border-emerald-200 bg-emerald-50 px-2 py-0.5 rounded-full">ON</span>' : '<span class="text-slate-300 font-black text-[9px]">OFF</span>'}
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <div class="flex justify-end gap-1">
+                            <a href="ver.html?id=${t.id}" class="p-2 text-slate-400 hover:text-indigo-600 transition-all" title="Ver"><i class="fas fa-eye text-xs"></i></a>
+                            <a href="editar.html?id=${t.id}" class="p-2 text-slate-400 hover:text-amber-600 transition-all" title="Editar"><i class="fas fa-pen text-[10px]"></i></a>
+                            <button onclick="confirmarExclusao('${t.id}', '${t.titulo}')" class="p-2 text-slate-400 hover:text-rose-600 transition-all" title="Excluir"><i class="fas fa-trash text-xs"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
 
-                const artistIds = artistMatches.map(a => a.id);
-
-                if (artistIds.length > 0) {
-                    query = query.or(`titulo.ilike.%${termo}%,artista_id.in.(${artistIds.join(',')})`);
+        async function confirmarExclusao(id, titulo) {
+            if (confirm(`Deseja excluir permanentemente o tape: ${titulo.toUpperCase()}?`)) {
+                const { error } = await supabaseClient.from('tapes').delete().eq('id', id);
+                if (error) {
+                    alert("Erro ao excluir!");
                 } else {
-                    query = query.ilike('titulo', `%${termo}%`);
+                    carregarTapes();
                 }
             }
-
-            const { data, error, count } = await query
-                .order('titulo', { ascending: true })
-                .range((currentPage - 1) * limit, currentPage * limit - 1);
-
-            if (error) throw error;
-
-            document.getElementById('total-records').textContent = count || 0;
-            totalPages = count > 0 ? Math.ceil(count / limit) : 0;
-            
-            atualizarInterface();
-            renderizarLista(data || []);
-
-        } catch (err) {
-            console.error(err);
-            container.innerHTML = `<div class="p-8 text-red-500 font-bold text-center">Ops! Não foi possível carregar os dados. Tente novamente mais tarde.</div>`;
-        }
-    }
-
-    function renderizarLista(tapes) {
-        const container = document.getElementById('tapes-list-container');
-        if (!tapes || tapes.length === 0) {
-            container.innerHTML = '<div class="p-20 text-center text-slate-400">Nenhum resultado encontrado.</div>';
-            return;
         }
 
-        // Estrutura de lista (tabela vertical) com linhas
-        container.innerHTML = `
-            <div class="bg-slate-100 rounded-t-2xl px-4 py-2 text-[10px] font-black text-slate-500 uppercase tracking-wider flex justify-between">
-                <span class="w-5/12">Título / Artista</span>
-                <span class="w-3/12 text-center">Gravadora</span>
-                <span class="w-2/12 text-center">Nº</span>
-                <span class="w-2/12 text-center">Ações</span>
-            </div>
-            <div class="space-y-2">
-                ${tapes.map(t => {
-                    const nomeArtista = t.artistas?.nome || 'Desconhecido';
-                    const nomeGravadora = t.gravadoras?.nome || 'Desconhecida';
-                    return `
-                        <div class="bg-white rounded-2xl p-3 border border-slate-100 card-shadow flex items-center justify-between">
-                            <div class="w-5/12">
-                                <h3 class="font-black text-sm text-slate-900 leading-tight">${t.titulo || 'SEM TÍTULO'}</h3>
-                                <p class="text-indigo-600 font-bold text-xs">${nomeArtista}</p>
-                            </div>
-                            <div class="w-3/12 text-center">
-                                <span class="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-1 rounded-full">${nomeGravadora.substring(0, 8)}${nomeGravadora.length > 8 ? '…' : ''}</span>
-                            </div>
-                            <div class="w-2/12 text-center">
-                                <span class="text-xs font-bold text-slate-800">${t.numero_tape || '-'}</span>
-                            </div>
-                            <div class="w-2/12 flex justify-end gap-1">
-                                <a href="ver.html?id=${t.id}" class="bg-indigo-100 text-indigo-700 w-8 h-8 rounded-xl flex items-center justify-center" title="Detalhes">
-                                    <i class="fas fa-eye text-xs"></i>
-                                </a>
-                                <a href="editar.html?id=${t.id}" class="bg-slate-100 text-slate-500 w-8 h-8 rounded-xl flex items-center justify-center" title="Editar">
-                                    <i class="fas fa-pen text-xs"></i>
-                                </a>
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
-    }
+        window.setStatusFilter = (status, btn) => {
+            selectedStatus = status;
+            btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('filter-active'));
+            btn.classList.add('filter-active');
+            currentPage = 1; carregarTapes();
+        };
 
-    function atualizarInterface() {
-        const currentSpan = document.getElementById('current-page');
-        const totalSpan = document.getElementById('total-pages');
-        const prevBtn = document.getElementById('prev-page');
-        const nextBtn = document.getElementById('next-page');
+        document.getElementById('sort-tape').onclick = function() {
+            currentSort = { column: 'titulo', table: null, ascending: true };
+            atualizarSortUI(this);
+        };
 
-        if (totalPages === 0) {
-            currentSpan.textContent = '0';
-            totalSpan.textContent = '0';
-            prevBtn.disabled = true;
-            nextBtn.disabled = true;
-        } else {
-            currentSpan.textContent = currentPage;
-            totalSpan.textContent = totalPages;
-            prevBtn.disabled = currentPage <= 1;
-            nextBtn.disabled = currentPage >= totalPages;
+        document.getElementById('sort-artist').onclick = function() {
+            currentSort = { column: 'nome', table: 'artistas', ascending: true };
+            atualizarSortUI(this);
+        };
+
+        function atualizarSortUI(btn) {
+            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('filter-active'));
+            btn.classList.add('filter-active');
+            currentPage = 1; carregarTapes();
         }
-    }
 
-    // Debounce na busca
-    let timer;
-    document.getElementById('search-input').addEventListener('input', () => {
-        clearTimeout(timer);
-        timer = setTimeout(() => { 
-            currentPage = 1; 
-            carregarTapes(); 
-        }, 400);
-    });
-
-    document.getElementById('prev-page').onclick = () => { 
-        if (currentPage > 1) { 
-            currentPage--; 
-            carregarTapes(); 
-            window.scrollTo(0, 0); 
+        document.getElementById('filter-gravadora').onchange = (e) => { selectedGravadora = e.target.value; currentPage = 1; carregarTapes(); };
+        document.getElementById('search-input').oninput = () => { clearTimeout(window.t); window.t = setTimeout(() => { currentPage = 1; carregarTapes(); }, 500); };
+        function atualizarBotoes(total) {
+            document.getElementById('current-page').textContent = currentPage;
+            document.getElementById('prev-page').disabled = currentPage <= 1;
+            document.getElementById('next-page').disabled = currentPage * limit >= total;
         }
-    };
+        document.getElementById('prev-page').onclick = () => { currentPage--; carregarTapes(); window.scrollTo(0,0); };
+        document.getElementById('next-page').onclick = () => { currentPage++; carregarTapes(); window.scrollTo(0,0); };
 
-    document.getElementById('next-page').onclick = () => { 
-        if (currentPage < totalPages) { 
-            currentPage++; 
-            carregarTapes(); 
-            window.scrollTo(0, 0); 
-        }
-    };
-
-    carregarTapes();
-</script>
-
+        (async () => { await carregarGravadorasSelect(); await carregarTapes(); })();
+    </script>
 </body>
 </html>

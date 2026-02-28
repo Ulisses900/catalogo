@@ -1,136 +1,250 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo de Músicas</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 100px); }
-    </style>
-</head>
-<body class="bg-slate-50 pb-safe">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Somax Studios | Músicas</title>
 
-    <header class="bg-white border-b border-slate-200 px-6 pt-8 pb-6 sticky top-0 z-40">
-        <div class="flex items-center justify-between mb-4">
-            <h1 class="text-2xl font-black text-slate-900 tracking-tight">Músicas</h1>
-            <div class="bg-indigo-100 text-indigo-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase">
-                <span id="total-count">0</span> Faixas
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+body { font-family: 'Inter', sans-serif; }
+</style>
+</head>
+
+<body class="bg-slate-50 text-slate-900">
+
+<!-- Sidebar e Header serão injetados aqui -->
+<main class="md:ml-64 min-h-screen">
+    <div id="header-container"></div>
+
+    <div class="p-6 md:p-8">
+
+        <!-- HEADER -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight uppercase text-slate-800">Músicas</h1>
+                <p class="text-slate-500 text-sm italic">Gestão individual de faixas e fonogramas.</p>
+            </div>
+            <div class="bg-white border border-slate-200 px-4 py-2 rounded-lg text-sm font-bold text-slate-700 shadow-sm">
+                TOTAL: <span id="total-count" class="text-indigo-600">0</span> FAIXAS
             </div>
         </div>
-        
-        <div class="relative group">
-            <input type="text" id="search-input" placeholder="Buscar música, autor ou tape..."
-                   class="w-full bg-slate-100 border-none rounded-2xl py-4 pl-12 pr-4 focus:ring-2 focus:ring-indigo-500 text-sm transition-all">
-            <i class="fas fa-search absolute left-4 top-4.5 text-slate-400 group-focus-within:text-indigo-500"></i>
-        </div>
-    </header>
 
-    <main class="px-4 py-6">
-        <div id="musicas-container" class="grid gap-4">
-            <div class="p-20 text-center text-slate-400 italic">Carregando músicas...</div>
+        <!-- BUSCA -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm mb-6">
+            <div class="relative">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="search-input"
+                placeholder="Buscar por música, autor ou tape..."
+                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+            </div>
         </div>
-    </main>
 
-    <div class="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-100 px-6 py-4 flex items-center justify-between z-50">
-        <button id="prev-btn" class="w-12 h-12 rounded-2xl border border-slate-200 flex items-center justify-center disabled:opacity-30">
-            <i class="fas fa-chevron-left text-slate-600"></i>
-        </button>
-        <div class="text-center">
-            <span class="text-[10px] font-black text-slate-400 uppercase block">Página</span>
-            <span id="page-info" class="text-sm font-bold text-slate-900">1 / 1</span>
+        <!-- FILTROS -->
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm mb-6">
+            <div class="grid md:grid-cols-3 gap-4">
+
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase">Classificar</label>
+                    <select id="order-select"
+                    class="w-full mt-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm">
+                        <option value="catalogo">Ordem de Catálogo</option>
+                        <option value="musica_asc">Música A-Z</option>
+                        <option value="musica_desc">Música Z-A</option>
+                        <option value="autor_asc">Autor A-Z</option>
+                        <option value="autor_desc">Autor Z-A</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="text-[11px] font-bold text-slate-500 uppercase">Filtrar por Tape</label>
+                    <select id="tape-filter"
+                    class="w-full mt-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm">
+                        <option value="">Todas as Tapes</option>
+                    </select>
+                </div>
+
+                <div class="flex items-end">
+                    <button id="clear-filters"
+                    class="w-full px-4 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700 transition">
+                        LIMPAR FILTROS
+                    </button>
+                </div>
+
+            </div>
         </div>
-        <button id="next-btn" class="w-12 h-12 rounded-2xl border border-slate-200 flex items-center justify-center disabled:opacity-30">
-            <i class="fas fa-chevron-right text-slate-600"></i>
-        </button>
+
+        <!-- TABELA -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 border-b border-slate-200 text-[10px] uppercase font-bold text-slate-500">
+                        <tr>
+                            <th class="px-6 py-4">Lado/Pos</th>
+                            <th class="px-6 py-4">Título</th>
+                            <th class="px-6 py-4">Autor</th>
+                            <th class="px-6 py-4">Tape</th>
+                            <th class="px-6 py-4 text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="musicas-container" class="divide-y divide-slate-100 text-sm italic">
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- PAGINAÇÃO -->
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                <div class="text-[11px] text-slate-500 font-medium">
+                    PÁGINA <span id="current-page-display">1</span>
+                </div>
+                <div class="flex gap-2">
+                    <button id="prev-btn"
+                    class="px-4 py-2 bg-white border border-slate-200 rounded-lg text-[10px] font-black hover:bg-slate-100 disabled:opacity-30">
+                        ANTERIOR
+                    </button>
+                    <button id="next-btn"
+                    class="px-4 py-2 bg-white border border-slate-200 rounded-lg text-[10px] font-black hover:bg-slate-100 disabled:opacity-30">
+                        PRÓXIMA
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
+</main>
 
-    <script>
-        const SUPABASE_URL = 'https://edabpftowxcyvsmuzzdf.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+<!-- IMPORTANTE: menu.js deve vir antes do script principal -->
+<script src="menu.js"></script>
 
-        let currentPage = 1;
-        const limit = 15;
+<script>
+const SUPABASE_URL = 'https://edabpftowxcyvsmuzzdf.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        async function carregarMusicas() {
-            const container = document.getElementById('musicas-container');
-            const termo = document.getElementById('search-input').value;
+let currentPage = 1;
+const limit = 15;
+let selectedOrder = 'catalogo';
+let selectedTape = '';
 
-            try {
-                // Query buscando música e o título da tape relacionada
-                let query = supabaseClient
-                    .from('faixas')
-                    .select('*, tapes(titulo, numero_tape)', { count: 'exact' });
+async function carregarTapes() {
+    const { data } = await supabaseClient
+    .from('tapes')
+    .select('id, titulo, numero_tape')
+    .order('numero_tape', { ascending: true });
 
-                if (termo) {
-                    query = query.ilike('musica', `%${termo}%`);
-                }
+    const select = document.getElementById('tape-filter');
+    data?.forEach(t => {
+        const option = document.createElement('option');
+        option.value = t.id;
+        option.textContent = `${t.numero_tape} - ${t.titulo}`;
+        select.appendChild(option);
+    });
+}
 
-                const { data, count, error } = await query
-                    .order('id', { ascending: false })
-                    .range((currentPage - 1) * limit, currentPage * limit - 1);
+async function carregarMusicas() {
+    const container = document.getElementById('musicas-container');
+    container.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-slate-400">Buscando...</td></tr>`;
 
-                if (error) throw error;
+    try {
+        const busca = document.getElementById('search-input').value.trim();
 
-                document.getElementById('total-count').innerText = count;
-                const totalPages = Math.ceil(count / limit);
-                document.getElementById('page-info').innerText = `${currentPage} / ${totalPages}`;
-                document.getElementById('prev-btn').disabled = currentPage <= 1;
-                document.getElementById('next-btn').disabled = currentPage >= totalPages;
+        let query = supabaseClient
+        .from('faixas')
+        .select(`*, tapes (titulo, numero_tape)`, { count: 'exact' });
 
-                if (data.length === 0) {
-                    container.innerHTML = '<p class="text-center py-20 text-slate-400">Nenhuma música encontrada.</p>';
-                    return;
-                }
-
-                container.innerHTML = data.map(m => `
-                    <div class="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm active:scale-[0.98] transition-transform">
-                        <div class="flex justify-between items-start mb-3">
-                            <div class="flex-1">
-                                <h3 class="font-black text-slate-900 leading-tight mb-1 text-base uppercase">${m.musica || 'SEM TÍTULO'}</h3>
-                                <p class="text-xs font-bold text-indigo-600 uppercase tracking-tight">${m.autor || 'Autor Desconhecido'}</p>
-                            </div>
-                            <span class="bg-slate-50 text-slate-400 text-[9px] font-bold px-2 py-1 rounded-lg">#${m.id}</span>
-                        </div>
-
-                        <div class="flex items-center gap-3 py-3 border-t border-slate-50 mb-3">
-                            <div class="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-500 text-xs font-black">
-                                ${m.lado || '-'}
-                            </div>
-                            <div class="flex-1 overflow-hidden">
-                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pertence à Tape</p>
-                                <p class="text-xs font-bold text-slate-700 truncate">${m.tapes?.titulo || 'Tape N/A'}</p>
-                            </div>
-                        </div>
-
-                        <div class="flex gap-2">
-                            <a href="musicas_view.html?id=${m.id}" class="flex-1 bg-slate-900 text-white text-[11px] font-black py-3 rounded-2xl text-center">VER DETALHES</a>
-                            <a href="editar.html?id=${m.tape_id}" class="w-12 bg-indigo-50 text-indigo-600 flex items-center justify-center rounded-2xl">
-                                <i class="fas fa-compact-disc"></i>
-                            </a>
-                        </div>
-                    </div>
-                `).join('');
-
-            } catch (err) {
-                container.innerHTML = `<p class="text-red-500 text-center py-10">Erro: ${err.message}</p>`;
-            }
+        if (busca) {
+            query = query.or(`
+                musica.ilike.%${busca}%,
+                autor.ilike.%${busca}%,
+                tapes.titulo.ilike.%${busca}%
+            `);
         }
 
-        // Eventos
-        let timer;
-        document.getElementById('search-input').oninput = () => {
-            clearTimeout(timer);
-            timer = setTimeout(() => { currentPage = 1; carregarMusicas(); }, 500);
-        };
+        if (selectedTape) {
+            query = query.eq('tape_id', selectedTape);
+        }
 
-        document.getElementById('prev-btn').onclick = () => { currentPage--; carregarMusicas(); window.scrollTo(0,0); };
-        document.getElementById('next-btn').onclick = () => { currentPage++; carregarMusicas(); window.scrollTo(0,0); };
+        switch (selectedOrder) {
+            case 'musica_asc': query = query.order('musica', { ascending: true }); break;
+            case 'musica_desc': query = query.order('musica', { ascending: false }); break;
+            case 'autor_asc': query = query.order('autor', { ascending: true }); break;
+            case 'autor_desc': query = query.order('autor', { ascending: false }); break;
+            default:
+                query = query
+                .order('tape_id', { ascending: true })
+                .order('lado', { ascending: true })
+                .order('numero', { ascending: true });
+        }
 
-        carregarMusicas();
-    </script>
+        const { data, count } = await query.range((currentPage - 1) * limit, currentPage * limit - 1);
+
+        document.getElementById('total-count').innerText = count || 0;
+        document.getElementById('current-page-display').innerText = currentPage;
+
+        renderizarTabela(data || []);
+        document.getElementById('prev-btn').disabled = currentPage <= 1;
+        document.getElementById('next-btn').disabled = currentPage * limit >= count;
+
+    } catch {
+        container.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-red-500">Erro ao carregar dados.</td></tr>`;
+    }
+}
+
+function renderizarTabela(musicas) {
+    const container = document.getElementById('musicas-container');
+
+    if (!musicas.length) {
+        container.innerHTML = `<tr><td colspan="5" class="py-12 text-center text-slate-400 uppercase">Nenhuma música encontrada.</td></tr>`;
+        return;
+    }
+
+    container.innerHTML = musicas.map(m => `
+    <tr class="hover:bg-indigo-50/40 transition-colors">
+        <td class="px-6 py-4 font-mono text-[11px] text-slate-500 uppercase text-center font-bold">
+            ${m.lado ?? ''}${m.numero?.toString().padStart(2,'0') ?? ''}
+        </td>
+        <td class="px-6 py-4 font-black text-slate-900 uppercase text-[12px] tracking-tight">
+            ${m.musica ?? 'SEM TÍTULO'}
+        </td>
+        <td class="px-6 py-4 text-slate-600 text-[11px] font-medium uppercase">
+            ${m.autor ?? 'NÃO INFORMADO'}
+        </td>
+        <td class="px-6 py-4 text-[10px] font-bold text-indigo-600 uppercase">
+            ${m.tapes?.numero_tape ?? ''} - ${m.tapes?.titulo ?? 'TAPE N/A'}
+        </td>
+        <td class="px-6 py-4 text-right">
+            <a href="musicas_view.html?id=${m.id}" class="p-2 text-slate-400 hover:text-indigo-600">
+                <i class="fas fa-file-alt text-xs"></i>
+            </a>
+        </td>
+    </tr>
+    `).join('');
+}
+
+document.getElementById('search-input').oninput = () => { currentPage = 1; carregarMusicas(); };
+document.getElementById('order-select').onchange = e => { selectedOrder = e.target.value; currentPage = 1; carregarMusicas(); };
+document.getElementById('tape-filter').onchange = e => { selectedTape = e.target.value; currentPage = 1; carregarMusicas(); };
+
+document.getElementById('clear-filters').onclick = () => {
+    selectedOrder = 'catalogo';
+    selectedTape = '';
+    document.getElementById('order-select').value = 'catalogo';
+    document.getElementById('tape-filter').value = '';
+    document.getElementById('search-input').value = '';
+    currentPage = 1;
+    carregarMusicas();
+};
+
+document.getElementById('prev-btn').onclick = () => { currentPage--; carregarMusicas(); window.scrollTo(0,0); };
+document.getElementById('next-btn').onclick = () => { currentPage++; carregarMusicas(); window.scrollTo(0,0); };
+
+carregarTapes();
+carregarMusicas();
+</script>
+
 </body>
 </html>

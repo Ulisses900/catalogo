@@ -1,204 +1,165 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistema de Catálogos Somax</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Somax Studios | Dashboard</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="menu.js"></script>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
 </head>
+<body class="bg-slate-50 text-slate-900">
 
-<body class="bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-white font-sans">
+    <main class="md:ml-64 min-h-screen">
+        
+        <div id="header-container"></div>
 
-<div class="max-w-7xl mx-auto pb-24 p-4 md:p-8">
+        <div class="p-8">
+            <div class="mb-8">
+                <h1 class="text-2xl font-bold tracking-tight">Painel de Controle</h1>
+                <p class="text-slate-500 text-sm">Visão geral do catálogo musical Somax Studios.</p>
+            </div>
 
-    <!-- Header Institucional -->
-    <div class="mb-8">
-        <h1 class="text-3xl md:text-4xl font-bold tracking-tight">
-            Sistema de Catálogos Somax
-        </h1>
-        <p class="text-slate-500 dark:text-slate-400 mt-1">
-            Catálogo Música – Somax Studios
-        </p>
-    </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-semibold text-slate-500 uppercase">Tapes</p>
+                    <h3 class="text-3xl font-bold mt-2" id="stat-tapes">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-semibold text-slate-500 uppercase">Artistas</p>
+                    <h3 class="text-3xl font-bold mt-2" id="stat-artistas">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-semibold text-slate-500 uppercase">Gravadoras</p>
+                    <h3 class="text-3xl font-bold mt-2" id="stat-gravadoras">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-semibold text-slate-500 uppercase">Faixas</p>
+                    <h3 class="text-3xl font-bold mt-2" id="stat-faixas">0</h3>
+                </div>
+            </div>
 
-    <!-- Estatísticas -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                        <h2 class="font-bold flex items-center gap-2">
+                            <i class="fas fa-history text-indigo-500"></i> Últimos Tapes
+                        </h2>
+                        <a href="tapes.html" class="text-xs text-indigo-600 font-semibold">Ver todos</a>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 text-[10px] uppercase font-bold text-slate-400">
+                                <tr>
+                                    <th class="px-6 py-3">Título</th>
+                                    <th class="px-6 py-3">Artista</th>
+                                    <th class="px-6 py-3">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="previewTapes" class="divide-y divide-slate-100 text-sm italic">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
 
-        <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800">
-            <div class="text-sm text-slate-500">Tapes</div>
-            <div class="text-3xl font-bold mt-1" id="stat-tapes">0</div>
-        </div>
-
-        <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800">
-            <div class="text-sm text-slate-500">Artistas</div>
-            <div class="text-3xl font-bold mt-1" id="stat-artistas">0</div>
-        </div>
-
-        <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800">
-            <div class="text-sm text-slate-500">Gravadoras</div>
-            <div class="text-3xl font-bold mt-1" id="stat-gravadoras">0</div>
-        </div>
-
-        <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800">
-            <div class="text-sm text-slate-500">Faixas</div>
-            <div class="text-3xl font-bold mt-1" id="stat-faixas">0</div>
-        </div>
-
-    </div>
-
-    <!-- Layout Principal -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-        <!-- Últimos Tapes -->
-        <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800">
-            <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                <i class="fas fa-clock text-indigo-500"></i>
-                Últimos Registros
-            </h2>
-
-            <div id="previewTapes" class="space-y-3">
-                <div class="text-slate-400 text-center py-6">Carregando...</div>
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <h2 class="font-bold mb-1 flex items-center gap-2 text-slate-700">
+                        <i class="fas fa-chart-pie text-indigo-500"></i> Top 5 Artistas
+                    </h2>
+                    <p class="text-[10px] text-slate-400 mb-6 italic">*Baseado no volume de tapes cadastrados</p>
+                    <div class="relative h-[300px]">
+                        <canvas id="graficoTopArtistas"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
+    </main>
 
-        <!-- Top Artistas com gráfico -->
-        <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800">
-            <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                <i class="fas fa-chart-bar text-indigo-500"></i>
-                Ranking de Artistas
-            </h2>
+    <script>
+        // Configurações do Supabase
+        const SUPABASE_URL = 'https://edabpftowxcyvsmuzzdf.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-            <canvas id="graficoTopArtistas" height="260"></canvas>
-        </div>
-
-    </div>
-</div>
-
-<!-- Bottom Navigation -->
-<nav class="fixed bottom-0 left-0 w-full bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 shadow-lg">
-    <div class="grid grid-cols-5 text-center text-xs">
-
-        <a href="index.html" class="py-3 flex flex-col items-center text-indigo-600">
-            <i class="fas fa-home text-lg"></i>
-            <span>Dashboard</span>
-        </a>
-
-        <a href="tapes.html" class="py-3 flex flex-col items-center hover:text-indigo-600">
-            <i class="fas fa-cassette text-lg"></i>
-            <span>Tapes</span>
-        </a>
-
-        <a href="musicas.html" class="py-3 flex flex-col items-center hover:text-indigo-600">
-            <i class="fas fa-music text-lg"></i>
-            <span>Músicas</span>
-        </a>
-
-        <a href="artistas.html" class="py-3 flex flex-col items-center hover:text-indigo-600">
-            <i class="fas fa-microphone text-lg"></i>
-            <span>Artistas</span>
-        </a>
-
-        <a href="gravadoras.html" class="py-3 flex flex-col items-center hover:text-indigo-600">
-            <i class="fas fa-building text-lg"></i>
-            <span>Labels</span>
-        </a>
-
-    </div>
-</nav>
-
-<script>
-const SUPABASE_URL = 'https://edabpftowxcyvsmuzzdf.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-async function carregarEstatisticas() {
-    const [tapes, artistas, gravadoras, faixas] = await Promise.all([
-        supabaseClient.from('tapes').select('*', { count: 'exact', head: true }),
-        supabaseClient.from('artistas').select('*', { count: 'exact', head: true }),
-        supabaseClient.from('gravadoras').select('*', { count: 'exact', head: true }),
-        supabaseClient.from('faixas').select('*', { count: 'exact', head: true })
-    ]);
-
-    document.getElementById('stat-tapes').textContent = tapes.count || 0;
-    document.getElementById('stat-artistas').textContent = artistas.count || 0;
-    document.getElementById('stat-gravadoras').textContent = gravadoras.count || 0;
-    document.getElementById('stat-faixas').textContent = faixas.count || 0;
-}
-
-async function carregarUltimosTapes() {
-    const { data } = await supabaseClient
-        .from('tapes')
-        .select(`id, titulo, artistas(nome)`)
-        .order('id', { ascending: false })
-        .limit(5);
-
-    const container = document.getElementById('previewTapes');
-
-    if (!data || data.length === 0) {
-        container.innerHTML = '<div class="text-slate-400 text-center py-6">Sem registros.</div>';
-        return;
-    }
-
-    container.innerHTML = data.map(t => `
-        <div class="flex justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
-            <div>
-                <div class="font-medium">${t.titulo}</div>
-                <div class="text-sm text-slate-500">${t.artistas?.nome || ''}</div>
-            </div>
-        </div>
-    `).join('');
-}
-
-async function carregarGraficoTopArtistas() {
-    const { data } = await supabaseClient
-        .from('tapes')
-        .select('artista_id, artistas(nome)')
-        .not('artista_id', 'is', null);
-
-    const contagem = {};
-
-    data.forEach(item => {
-        const nome = item.artistas?.nome || 'Desconhecido';
-        contagem[nome] = (contagem[nome] || 0) + 1;
-    });
-
-    const ranking = Object.entries(contagem)
-        .sort((a,b) => b[1]-a[1])
-        .slice(0,5);
-
-    new Chart(document.getElementById('graficoTopArtistas'), {
-        type: 'bar',
-        data: {
-            labels: ranking.map(r => r[0]),
-            datasets: [{
-                label: 'Quantidade de Tapes',
-                data: ranking.map(r => r[1]),
-                backgroundColor: '#6366f1',
-                borderRadius: 8
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            plugins: { legend: { display: false }},
-            scales: {
-                x: { beginAtZero: true }
-            }
+        async function carregarEstatisticas() {
+            const [tapes, artistas, gravadoras, faixas] = await Promise.all([
+                supabaseClient.from('tapes').select('*', { count: 'exact', head: true }),
+                supabaseClient.from('artistas').select('*', { count: 'exact', head: true }),
+                supabaseClient.from('gravadoras').select('*', { count: 'exact', head: true }),
+                supabaseClient.from('faixas').select('*', { count: 'exact', head: true })
+            ]);
+            document.getElementById('stat-tapes').textContent = tapes.count || 0;
+            document.getElementById('stat-artistas').textContent = artistas.count || 0;
+            document.getElementById('stat-gravadoras').textContent = gravadoras.count || 0;
+            document.getElementById('stat-faixas').textContent = faixas.count || 0;
         }
-    });
-}
 
-(async () => {
-    await carregarEstatisticas();
-    await carregarUltimosTapes();
-    await carregarGraficoTopArtistas();
-})();
-</script>
+        async function carregarUltimosTapes() {
+            const { data } = await supabaseClient.from('tapes').select(`id, titulo, artistas(nome)`).order('id', { ascending: false }).limit(6);
+            const container = document.getElementById('previewTapes');
+            if (!data) return;
+            container.innerHTML = data.map(t => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4 font-medium">${t.titulo}</td>
+                    <td class="px-6 py-4"><span class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-[11px] font-semibold">${t.artistas?.nome || 'N/A'}</span></td>
+                    <td class="px-6 py-4 text-slate-400"><i class="fas fa-chevron-right"></i></td>
+                </tr>
+            `).join('');
+        }
 
+        async function carregarGraficoTopArtistas() {
+            const { data } = await supabaseClient.from('tapes').select('artista_id, artistas(nome)').not('artista_id', 'is', null);
+            const contagem = {};
+            data.forEach(item => {
+                const nome = item.artistas?.nome || 'Desconhecido';
+                contagem[nome] = (contagem[nome] || 0) + 1;
+            });
+            const ranking = Object.entries(contagem).sort((a,b) => b[1]-a[1]).slice(0,5);
+
+            Chart.register(ChartDataLabels);
+            new Chart(document.getElementById('graficoTopArtistas'), {
+                type: 'doughnut',
+                data: {
+                    labels: ranking.map(r => r[0]),
+                    datasets: [{
+                        data: ranking.map(r => r[1]),
+                        backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, font: { size: 11 } } },
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold', size: 14 },
+                            formatter: (value) => value
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+        }
+
+        (async () => {
+            await carregarEstatisticas();
+            await carregarUltimosTapes();
+            await carregarGraficoTopArtistas();
+        })();
+    </script>
 </body>
 </html>
