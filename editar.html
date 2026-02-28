@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Tape</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-50/50">
+
+<div class="max-w-5xl mx-auto py-6 px-4">
+    <h1 class="text-2xl font-semibold mb-4" id="page-title">Editar Tape</h1>
+
+    <form id="tapeForm" class="space-y-6" onsubmit="return false;">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium mb-1">Título</label>
+                <input type="text" id="titulo" class="w-full border rounded px-3 py-2">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Número Tape</label>
+                <input type="text" id="numero_tape" class="w-full border rounded px-3 py-2">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1">Artista</label>
+                <select id="artista_id" class="w-full border rounded px-3 py-2">
+                    <option value="">— Selecione —</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1">Gravadora</label>
+                <select id="gravadora_id" class="w-full border rounded px-3 py-2">
+                    <option value="">— Selecione —</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1">Etiqueta</label>
+                <select id="etiqueta_id" class="w-full border rounded px-3 py-2">
+                    <option value="">— Selecione —</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1">Tipo de Mídia</label>
+                <select id="tipo_midia_id" class="w-full border rounded px-3 py-2">
+                    <option value="">— Selecione —</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1">Ano</label>
+                <input type="text" id="ano" class="w-full border rounded px-3 py-2">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1">País</label>
+                <input type="text" id="pais" class="w-full border rounded px-3 py-2">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1">Gênero (tape)</label>
+                <input type="text" id="genero" class="w-full border rounded px-3 py-2">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1">Status</label>
+                <input type="text" id="status" class="w-full border rounded px-3 py-2">
+            </div>
+
+            <div class="flex items-center gap-4">
+                <label class="inline-flex items-center">
+                    <input type="checkbox" id="on_stream" class="mr-2"> On Stream
+                </label>
+                <label class="inline-flex items-center">
+                    <input type="checkbox" id="digitalizada" class="mr-2"> Digitalizada
+                </label>
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium mb-1">Observações</label>
+                <textarea id="observacoes" rows="3" class="w-full border rounded px-3 py-2"></textarea>
+            </div>
+        </div>
+
+        <!-- Tabela de Faixas -->
+        <div class="mt-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold">Faixas</h2>
+                <button type="button" id="addFaixaBtn" class="px-3 py-2 border rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100">+ Adicionar faixa</button>
+            </div>
+
+            <div class="mt-3 overflow-x-auto">
+                <table class="min-w-full border" id="faixasTable">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="border px-2 py-1">#</th>
+                            <th class="border px-2 py-1">Lado</th>
+                            <th class="border px-2 py-1">Gênero</th>
+                            <th class="border px-2 py-1">Título</th>
+                            <th class="border px-2 py-1">Autor</th>
+                            <th class="border px-2 py-1">Editora</th>
+                            <th class="border px-2 py-1">Percentual</th>
+                            <th class="border px-2 py-1">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="faixas-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="flex gap-3 mt-6">
+            <button id="saveBtn" class="px-4 py-2 bg-blue-600 text-white rounded">Salvar</button>
+            <a href="#" id="cancelBtn" class="px-4 py-2 border rounded">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    const SUPABASE_URL = 'https://edabpftowxcyvsmuzzdf.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const tapeId = urlParams.get('id');
+
+    if (!tapeId) {
+        window.location.href = 'index.html';
+    }
+
+    // Elementos do formulário
+    const tituloInput = document.getElementById('titulo');
+    const numeroTapeInput = document.getElementById('numero_tape');
+    const artistaSelect = document.getElementById('artista_id');
+    const gravadoraSelect = document.getElementById('gravadora_id');
+    const etiquetaSelect = document.getElementById('etiqueta_id');
+    const tipoMidiaSelect = document.getElementById('tipo_midia_id');
+    const anoInput = document.getElementById('ano');
+    const paisInput = document.getElementById('pais');
+    const generoInput = document.getElementById('genero');
+    const statusInput = document.getElementById('status');
+    const onStreamCheck = document.getElementById('on_stream');
+    const digitalizadaCheck = document.getElementById('digitalizada');
+    const observacoesTextarea = document.getElementById('observacoes');
+    const faixasTbody = document.getElementById('faixas-tbody');
+
+    let artistas = [], gravadoras = [], etiquetas = [], tiposMidia = [];
+    let faixasExistentes = []; // para controle de deleção
+
+    // Carregar listas para selects
+    async function carregarListas() {
+        const [artistasRes, gravadorasRes, etiquetasRes, tiposRes] = await Promise.all([
+            supabase.from('artistas').select('id, nome').order('nome'),
+            supabase.from('gravadoras').select('id, nome').order('nome'),
+            supabase.from('etiquetas').select('id, nome').order('nome'),
+            supabase.from('tipo_midia').select('id, nome').order('nome')
+        ]);
+
+        if (artistasRes.error) throw artistasRes.error;
+        if (gravadorasRes.error) throw gravadorasRes.error;
+        if (etiquetasRes.error) throw etiquetasRes.error;
+        if (tiposRes.error) throw tiposRes.error;
+
+        artistas = artistasRes.data;
+        gravadoras = gravadorasRes.data;
+        etiquetas = etiquetasRes.data;
+        tiposMidia = tiposRes.data;
+
+        preencherSelect(artistaSelect, artistas);
+        preencherSelect(gravadoraSelect, gravadoras);
+        preencherSelect(etiquetaSelect, etiquetas);
+        preencherSelect(tipoMidiaSelect, tiposMidia);
+    }
+
+    function preencherSelect(select, dados) {
+        dados.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.id;
+            option.textContent = item.nome;
+            select.appendChild(option);
+        });
+    }
+
+    // Carregar dados do tape e faixas
+    async function carregarTape() {
+        const { data: tape, error } = await supabase
+            .from('tapes')
+            .select('*')
+            .eq('id', tapeId)
+            .single();
+
+        if (error) throw error;
+
+        // Preencher campos
+        tituloInput.value = tape.titulo || '';
+        numeroTapeInput.value = tape.numero_tape || '';
+        artistaSelect.value = tape.artista_id || '';
+        gravadoraSelect.value = tape.gravadora_id || '';
+        etiquetaSelect.value = tape.etiqueta_id || '';
+        tipoMidiaSelect.value = tape.tipo_midia_id || '';
+        anoInput.value = tape.ano || '';
+        paisInput.value = tape.pais || '';
+        generoInput.value = tape.genero || '';
+        statusInput.value = tape.status || '';
+        onStreamCheck.checked = tape.on_stream || false;
+        digitalizadaCheck.checked = tape.digitalizada || false;
+        observacoesTextarea.value = tape.observacoes || '';
+
+        document.getElementById('page-title').textContent = `Editar Tape — ${tape.titulo || 'Sem título'}`;
+        document.getElementById('cancelBtn').href = `ver.html?id=${tape.id}`;
+    }
+
+    async function carregarFaixas() {
+        const { data: faixas, error } = await supabase
+            .from('faixas')
+            .select('*')
+            .eq('tape_id', tapeId)
+            .order('numero', { ascending: true });
+
+        if (error) throw error;
+        faixasExistentes = faixas || [];
+        renderizarLinhasFaixas(faixasExistentes);
+    }
+
+    function renderizarLinhasFaixas(faixas) {
+        faixasTbody.innerHTML = '';
+        if (faixas.length === 0) {
+            // Linha vazia para facilitar adição
+            adicionarLinhaFaixa();
+        } else {
+            faixas.forEach(f => adicionarLinhaFaixa(f));
+        }
+    }
+
+    function adicionarLinhaFaixa(faixa = {}) {
+        const tr = document.createElement('tr');
+        tr.dataset.id = faixa.id || '';
+        tr.innerHTML = `
+            <td class="border px-2 py-1"><input class="w-16 border rounded px-2 py-1" name="numero" value="${faixa.numero || ''}"></td>
+            <td class="border px-2 py-1"><input class="w-16 border rounded px-2 py-1" name="lado" value="${faixa.lado || ''}" maxlength="1" placeholder="A/B"></td>
+            <td class="border px-2 py-1"><input class="w-24 border rounded px-2 py-1" name="genero" value="${faixa.genero || ''}"></td>
+            <td class="border px-2 py-1"><input class="w-64 border rounded px-2 py-1" name="musica" value="${faixa.musica || ''}"></td>
+            <td class="border px-2 py-1"><input class="w-64 border rounded px-2 py-1" name="autor" value="${faixa.autor || ''}"></td>
+            <td class="border px-2 py-1"><input class="w-32 border rounded px-2 py-1" name="editora" value="${faixa.editora || ''}"></td>
+            <td class="border px-2 py-1"><input class="w-20 border rounded px-2 py-1" name="percentual" value="${faixa.percentual || ''}"></td>
+            <td class="border px-2 py-1 text-center">
+                <button type="button" class="text-red-600 hover:underline remove-row">Remover</button>
+            </td>
+        `;
+        faixasTbody.appendChild(tr);
+    }
+
+    // Evento para adicionar nova linha
+    document.getElementById('addFaixaBtn').addEventListener('click', () => {
+        adicionarLinhaFaixa();
+    });
+
+    // Evento para remover linha (delegação)
+    faixasTbody.addEventListener('click', (e) => {
+        if (e.target.classList.contains('remove-row')) {
+            e.target.closest('tr').remove();
+        }
+    });
+
+    // Função de salvar
+    async function salvar() {
+        // Dados do tape
+        const tapePayload = {
+            titulo: tituloInput.value.trim(),
+            numero_tape: numeroTapeInput.value.trim(),
+            artista_id: parseInt(artistaSelect.value) || null,
+            gravadora_id: parseInt(gravadoraSelect.value) || null,
+            etiqueta_id: parseInt(etiquetaSelect.value) || null,
+            tipo_midia_id: parseInt(tipoMidiaSelect.value) || null,
+            ano: anoInput.value.trim() || null,
+            pais: paisInput.value.trim() || null,
+            genero: generoInput.value.trim() || null,
+            status: statusInput.value.trim() || null,
+            on_stream: onStreamCheck.checked,
+            digitalizada: digitalizadaCheck.checked,
+            observacoes: observacoesTextarea.value.trim() || null
+        };
+
+        // Atualizar tape
+        const { error: updateError } = await supabase
+            .from('tapes')
+            .update(tapePayload)
+            .eq('id', tapeId);
+
+        if (updateError) throw updateError;
+
+        // Processar faixas
+        const linhas = document.querySelectorAll('#faixas-tbody tr');
+        const faixasParaSalvar = [];
+        const idsEnviados = new Set();
+
+        for (const tr of linhas) {
+            const inputs = tr.querySelectorAll('input');
+            const faixa = {
+                id: tr.dataset.id ? parseInt(tr.dataset.id) : null,
+                tape_id: parseInt(tapeId),
+                numero: inputs[0].value.trim() || null,
+                lado: inputs[1].value.trim() || null,
+                genero: inputs[2].value.trim() || null,
+                musica: inputs[3].value.trim() || null,
+                autor: inputs[4].value.trim() || null,
+                editora: inputs[5].value.trim() || null,
+                percentual: inputs[6].value.trim() ? parseInt(inputs[6].value.trim()) : null
+            };
+            faixasParaSalvar.push(faixa);
+            if (faixa.id) idsEnviados.add(faixa.id);
+        }
+
+        // Deletar faixas removidas
+        const idsExistentes = faixasExistentes.map(f => f.id);
+        const idsParaDeletar = idsExistentes.filter(id => !idsEnviados.has(id));
+        if (idsParaDeletar.length > 0) {
+            const { error: deleteError } = await supabase
+                .from('faixas')
+                .delete()
+                .in('id', idsParaDeletar);
+            if (deleteError) throw deleteError;
+        }
+
+        // Inserir/Atualizar faixas
+        for (const faixa of faixasParaSalvar) {
+            if (faixa.id) {
+                // Update
+                const { error } = await supabase
+                    .from('faixas')
+                    .update({
+                        numero: faixa.numero,
+                        lado: faixa.lado,
+                        genero: faixa.genero,
+                        musica: faixa.musica,
+                        autor: faixa.autor,
+                        editora: faixa.editora,
+                        percentual: faixa.percentual
+                    })
+                    .eq('id', faixa.id);
+                if (error) throw error;
+            } else {
+                // Insert
+                const { error } = await supabase
+                    .from('faixas')
+                    .insert({
+                        tape_id: faixa.tape_id,
+                        numero: faixa.numero,
+                        lado: faixa.lado,
+                        genero: faixa.genero,
+                        musica: faixa.musica,
+                        autor: faixa.autor,
+                        editora: faixa.editora,
+                        percentual: faixa.percentual
+                    });
+                if (error) throw error;
+            }
+        }
+
+        alert('Tape atualizado com sucesso!');
+        window.location.href = `ver.html?id=${tapeId}`;
+    }
+
+    // Inicialização
+    (async () => {
+        try {
+            await carregarListas();
+            await carregarTape();
+            await carregarFaixas();
+        } catch (err) {
+            console.error(err);
+            alert('Erro ao carregar dados: ' + err.message);
+        }
+    })();
+
+    document.getElementById('saveBtn').addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+            await salvar();
+        } catch (err) {
+            console.error(err);
+            alert('Erro ao salvar: ' + err.message);
+        }
+    });
+</script>
+</body>
+</html>
