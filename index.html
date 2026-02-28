@@ -2,134 +2,112 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dashboard - Acervo Ulisses</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Catálogo de Tapes</title>
+
+    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <style>
-        /* Respeita o modo do sistema (Claro/Escuro) */
-        :root {
-            --bg-body: #f8fafc;
-            --bg-card: #ffffff;
-            --text-main: #1e293b;
-            --text-sub: #64748b;
-            --border-color: #e2e8f0;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-body: #0f172a;
-                --bg-card: #1e293b;
-                --text-main: #f1f5f9;
-                --text-sub: #94a3b8;
-                --border-color: #334155;
-            }
-        }
-
-        body { 
-            background-color: var(--bg-body); 
-            color: var(--text-main);
-            font-family: system-ui, -apple-system, sans-serif;
-        }
-
-        .card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-        }
-
-        .text-secondary { color: var(--text-sub); }
-
-        /* Estilo da Tab Bar (Barra de Aplicativo) */
-        .tab-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 70px;
-            background: var(--bg-card);
-            border-top: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding-bottom: env(safe-area-inset-bottom);
-            z-index: 100;
-        }
-
-        .tab-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-size: 10px;
-            font-weight: bold;
-            color: var(--text-sub);
-            text-decoration: none;
-        }
-
-        .tab-item.active { color: #4f46e5; }
-        .tab-item i { font-size: 20px; margin-bottom: 4px; }
-
-        /* Ajuste para o conteúdo não ficar escondido atrás da barra */
-        .content-wrapper { padding-bottom: 90px; }
-    </style>
 </head>
-<body class="p-4 md:p-6">
 
-<div class="max-w-xl mx-auto content-wrapper">
-    <div class="flex items-center justify-between mb-8 pt-4">
-        <div>
-            <h1 class="text-2xl font-black tracking-tight">Olá, Ulisses 👋</h1>
-            <p class="text-secondary text-sm">Status atual do seu acervo</p>
-        </div>
-        <div class="bg-indigo-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
-            <span id="total-tapes">0</span> Tapes
-        </div>
-    </div>
+<body class="bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-white font-sans">
 
+<div class="max-w-7xl mx-auto pb-24 p-4 md:p-6">
+
+    <!-- Cabeçalho -->
     <div class="mb-6">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="font-black text-sm uppercase tracking-widest text-secondary">Últimas Entradas</h2>
-            <a href="tapes.html" class="text-xs font-bold text-indigo-500">Ver tudo</a>
+        <h1 class="text-2xl md:text-3xl font-bold">Olá, Ulisses 👋</h1>
+        <p class="text-slate-500 dark:text-slate-400 text-sm">
+            Bem-vindo ao seu catálogo de tapes
+        </p>
+    </div>
+
+    <!-- Cards Estatísticas -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow">
+            <div class="text-xs uppercase text-slate-500">Total Tapes</div>
+            <div class="text-2xl font-bold" id="stat-tapes">0</div>
         </div>
-        
+
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow">
+            <div class="text-xs uppercase text-slate-500">Artistas</div>
+            <div class="text-2xl font-bold" id="stat-artistas">0</div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow">
+            <div class="text-xs uppercase text-slate-500">Gravadoras</div>
+            <div class="text-2xl font-bold" id="stat-gravadoras">0</div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow">
+            <div class="text-xs uppercase text-slate-500">Faixas</div>
+            <div class="text-2xl font-bold" id="stat-faixas">0</div>
+        </div>
+
+    </div>
+
+    <!-- Últimos 5 Tapes -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow mb-6">
+        <h2 class="font-semibold text-lg mb-4">
+            <i class="fas fa-clock mr-2 text-indigo-500"></i>
+            Últimos 5 Tapes
+        </h2>
+
         <div id="previewTapes" class="space-y-3">
-            <div class="card p-6 rounded-3xl text-center text-secondary italic text-sm">
-                Sincronizando com banco...
-            </div>
+            <div class="text-slate-500 text-center py-4">Carregando...</div>
         </div>
     </div>
 
-    <div>
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="font-black text-sm uppercase tracking-widest text-secondary">Principais Artistas</h2>
+    <!-- Top 5 Artistas -->
+    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow">
+        <h2 class="font-semibold text-lg mb-4">
+            <i class="fas fa-star mr-2 text-indigo-500"></i>
+            Top 5 Artistas
+        </h2>
+
+        <div id="topArtistas" class="space-y-3">
+            <div class="text-slate-500 text-center py-4">Carregando...</div>
         </div>
-        <div id="topArtistas" class="space-y-2">
-            </div>
     </div>
+
 </div>
 
-<nav class="tab-bar">
-    <a href="index.html" class="tab-item active">
-        <i class="fas fa-th-large"></i>
-        <span>Início</span>
-    </a>
-    <a href="tapes.html" class="tab-item">
-        <i class="fas fa-compact-disc"></i>
-        <span>Tapes</span>
-    </a>
-    <a href="musicas.html" class="tab-item">
-        <i class="fas fa-music"></i>
-        <span>Músicas</span>
-    </a>
-    <a href="artistas.html" class="tab-item">
-        <i class="fas fa-microphone"></i>
-        <span>Artistas</span>
-    </a>
-    <a href="gravadoras.html" class="tab-item">
-        <i class="fas fa-building"></i>
-        <span>Gravadoras</span>
-    </a>
+<!-- Bottom Navigation estilo APK -->
+<nav class="fixed bottom-0 left-0 w-full bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 shadow-lg">
+    <div class="grid grid-cols-5 text-center text-xs">
+
+        <a href="index.html" class="py-3 flex flex-col items-center text-indigo-600">
+            <i class="fas fa-home text-lg"></i>
+            <span>Home</span>
+        </a>
+
+        <a href="tapes.html" class="py-3 flex flex-col items-center hover:text-indigo-600">
+            <i class="fas fa-cassette text-lg"></i>
+            <span>Tapes</span>
+        </a>
+
+        <a href="musicas.html" class="py-3 flex flex-col items-center hover:text-indigo-600">
+            <i class="fas fa-music text-lg"></i>
+            <span>Músicas</span>
+        </a>
+
+        <a href="artistas.html" class="py-3 flex flex-col items-center hover:text-indigo-600">
+            <i class="fas fa-microphone text-lg"></i>
+            <span>Artistas</span>
+        </a>
+
+        <a href="gravadoras.html" class="py-3 flex flex-col items-center hover:text-indigo-600">
+            <i class="fas fa-building text-lg"></i>
+            <span>Labels</span>
+        </a>
+
+    </div>
 </nav>
 
 <script>
@@ -137,51 +115,62 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    async function carregarDashboard() {
+    // Estatísticas
+    async function carregarEstatisticas() {
         try {
-            // 1. Total de Tapes
-            const { count } = await supabaseClient.from('tapes').select('*', { count: 'exact', head: true });
-            document.getElementById('total-tapes').textContent = count || 0;
+            const [tapesRes, artistasRes, gravadorasRes, faixasRes] = await Promise.all([
+                supabaseClient.from('tapes').select('*', { count: 'exact', head: true }),
+                supabaseClient.from('artistas').select('*', { count: 'exact', head: true }),
+                supabaseClient.from('gravadoras').select('*', { count: 'exact', head: true }),
+                supabaseClient.from('faixas').select('*', { count: 'exact', head: true })
+            ]);
 
-            // 2. Últimos 5 Tapes
-            const { data: tapes } = await supabaseClient
+            document.getElementById('stat-tapes').textContent = tapesRes.count || 0;
+            document.getElementById('stat-artistas').textContent = artistasRes.count || 0;
+            document.getElementById('stat-gravadoras').textContent = gravadorasRes.count || 0;
+            document.getElementById('stat-faixas').textContent = faixasRes.count || 0;
+
+        } catch (err) {
+            console.error('Erro ao carregar estatísticas:', err);
+        }
+    }
+
+    // Últimos 5 tapes
+    async function carregarUltimosTapes() {
+        try {
+            const { data, error } = await supabaseClient
                 .from('tapes')
-                .select('id, titulo, numero_tape, artistas(nome)')
+                .select(`
+                    id,
+                    titulo,
+                    numero_tape,
+                    artistas ( nome ),
+                    gravadoras ( nome )
+                `)
                 .order('id', { ascending: false })
                 .limit(5);
 
-            const containerTapes = document.getElementById('previewTapes');
-            containerTapes.innerHTML = tapes.map(t => `
-                <a href="ver.html?id=${t.id}" class="card p-4 rounded-2xl flex items-center justify-between shadow-sm active:scale-[0.98] transition-all decoration-none">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center text-indigo-600">
-                            <i class="fas fa-record-vinyl"></i>
-                        </div>
-                        <div>
-                            <div class="font-bold text-sm leading-tight">${t.titulo || 'Sem título'}</div>
-                            <div class="text-[11px] text-secondary font-medium">${t.artistas?.nome || 'Artista N/A'}</div>
+            if (error) throw error;
+
+            const container = document.getElementById('previewTapes');
+
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div class="text-slate-500 text-center py-4">Nenhum tape encontrado.</div>';
+                return;
+            }
+
+            container.innerHTML = data.map(tape => `
+                <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2 last:border-0">
+                    <div>
+                        <div class="font-medium">${tape.titulo || 'Sem título'}</div>
+                        <div class="text-xs text-slate-500">
+                            ${tape.artistas?.nome || 'Artista desconhecido'}
+                            ${tape.gravadoras?.nome ? ' • ' + tape.gravadoras.nome : ''}
                         </div>
                     </div>
-                    <i class="fas fa-chevron-right text-[10px] text-secondary"></i>
-                </a>
-            `).join('');
-
-            // 3. Top Artistas (Simples)
-            const { data: artData } = await supabaseClient.from('tapes').select('artistas(nome)');
-            const counts = {};
-            artData.forEach(x => {
-                const nome = x.artistas?.nome || 'Desconhecido';
-                counts[nome] = (counts[nome] || 0) + 1;
-            });
-
-            const top = Object.entries(counts)
-                .sort((a,b) => b[1] - a[1])
-                .slice(0, 5);
-
-            document.getElementById('topArtistas').innerHTML = top.map(([nome, qtd]) => `
-                <div class="card p-3 rounded-xl flex justify-between items-center">
-                    <span class="text-xs font-bold">${nome}</span>
-                    <span class="text-[10px] bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md font-black">${qtd}</span>
+                    <a href="ver.html?id=${tape.id}" class="text-indigo-500 text-sm hover:underline">
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
                 </div>
             `).join('');
 
@@ -190,7 +179,62 @@
         }
     }
 
-    carregarDashboard();
+    // Top 5 artistas
+    async function carregarTopArtistas() {
+        try {
+            const { data, error } = await supabaseClient
+                .from('tapes')
+                .select('artista_id, artistas ( nome )')
+                .not('artista_id', 'is', null);
+
+            if (error) throw error;
+
+            const contagem = {};
+
+            data.forEach(item => {
+                const id = item.artista_id;
+                const nome = item.artistas?.nome || 'Desconhecido';
+
+                if (!contagem[id]) {
+                    contagem[id] = { nome, count: 0 };
+                }
+
+                contagem[id].count++;
+            });
+
+            const ranking = Object.values(contagem)
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 5);
+
+            const container = document.getElementById('topArtistas');
+
+            if (ranking.length === 0) {
+                container.innerHTML = '<div class="text-slate-500 text-center py-4">Nenhum artista com tapes.</div>';
+                return;
+            }
+
+            container.innerHTML = ranking.map((item, idx) => `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-slate-400 text-sm">${idx + 1}.</span>
+                        <span class="font-medium">${item.nome}</span>
+                    </div>
+                    <span class="bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 text-xs px-2 py-1 rounded-full">
+                        ${item.count} tapes
+                    </span>
+                </div>
+            `).join('');
+
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    (async () => {
+        await carregarEstatisticas();
+        await carregarUltimosTapes();
+        await carregarTopArtistas();
+    })();
 </script>
 
 </body>
