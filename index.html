@@ -1,90 +1,92 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Catálogo de Tapes</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Catálogos Somax</title>
 
-    <!-- Tailwind -->
-    <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
-<body class="bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-white font-sans">
+<body class="bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-white font-sans">
 
-<div class="max-w-7xl mx-auto pb-24 p-4 md:p-6">
+<div class="max-w-7xl mx-auto pb-24 p-4 md:p-8">
 
-    <!-- Cabeçalho -->
-    <div class="mb-6">
-        <h1 class="text-2xl md:text-3xl font-bold">Olá, Ulisses 👋</h1>
-        <p class="text-slate-500 dark:text-slate-400 text-sm">
-            Bem-vindo ao seu catálogo de tapes
+    <!-- Header Institucional -->
+    <div class="mb-8">
+        <h1 class="text-3xl md:text-4xl font-bold tracking-tight">
+            Sistema de Catálogos Somax
+        </h1>
+        <p class="text-slate-500 dark:text-slate-400 mt-1">
+            Catálogo Música – Somax Studios
         </p>
     </div>
 
-    <!-- Cards Estatísticas -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <!-- Estatísticas -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
 
-        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow">
-            <div class="text-xs uppercase text-slate-500">Total Tapes</div>
-            <div class="text-2xl font-bold" id="stat-tapes">0</div>
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800">
+            <div class="text-sm text-slate-500">Tapes</div>
+            <div class="text-3xl font-bold mt-1" id="stat-tapes">0</div>
         </div>
 
-        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow">
-            <div class="text-xs uppercase text-slate-500">Artistas</div>
-            <div class="text-2xl font-bold" id="stat-artistas">0</div>
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800">
+            <div class="text-sm text-slate-500">Artistas</div>
+            <div class="text-3xl font-bold mt-1" id="stat-artistas">0</div>
         </div>
 
-        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow">
-            <div class="text-xs uppercase text-slate-500">Gravadoras</div>
-            <div class="text-2xl font-bold" id="stat-gravadoras">0</div>
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800">
+            <div class="text-sm text-slate-500">Gravadoras</div>
+            <div class="text-3xl font-bold mt-1" id="stat-gravadoras">0</div>
         </div>
 
-        <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow">
-            <div class="text-xs uppercase text-slate-500">Faixas</div>
-            <div class="text-2xl font-bold" id="stat-faixas">0</div>
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800">
+            <div class="text-sm text-slate-500">Faixas</div>
+            <div class="text-3xl font-bold mt-1" id="stat-faixas">0</div>
         </div>
 
     </div>
 
-    <!-- Últimos 5 Tapes -->
-    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow mb-6">
-        <h2 class="font-semibold text-lg mb-4">
-            <i class="fas fa-clock mr-2 text-indigo-500"></i>
-            Últimos 5 Tapes
-        </h2>
+    <!-- Layout Principal -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-        <div id="previewTapes" class="space-y-3">
-            <div class="text-slate-500 text-center py-4">Carregando...</div>
+        <!-- Últimos Tapes -->
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800">
+            <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                <i class="fas fa-clock text-indigo-500"></i>
+                Últimos Registros
+            </h2>
+
+            <div id="previewTapes" class="space-y-3">
+                <div class="text-slate-400 text-center py-6">Carregando...</div>
+            </div>
         </div>
-    </div>
 
-    <!-- Top 5 Artistas -->
-    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow">
-        <h2 class="font-semibold text-lg mb-4">
-            <i class="fas fa-star mr-2 text-indigo-500"></i>
-            Top 5 Artistas
-        </h2>
+        <!-- Top Artistas com gráfico -->
+        <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800">
+            <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                <i class="fas fa-chart-bar text-indigo-500"></i>
+                Ranking de Artistas
+            </h2>
 
-        <div id="topArtistas" class="space-y-3">
-            <div class="text-slate-500 text-center py-4">Carregando...</div>
+            <canvas id="graficoTopArtistas" height="260"></canvas>
         </div>
-    </div>
 
+    </div>
 </div>
 
-<!-- Bottom Navigation estilo APK -->
-<nav class="fixed bottom-0 left-0 w-full bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 shadow-lg">
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 left-0 w-full bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 shadow-lg">
     <div class="grid grid-cols-5 text-center text-xs">
 
         <a href="index.html" class="py-3 flex flex-col items-center text-indigo-600">
             <i class="fas fa-home text-lg"></i>
-            <span>Home</span>
+            <span>Dashboard</span>
         </a>
 
         <a href="tapes.html" class="py-3 flex flex-col items-center hover:text-indigo-600">
@@ -111,130 +113,91 @@
 </nav>
 
 <script>
-    const SUPABASE_URL = 'https://edabpftowxcyvsmuzzdf.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const SUPABASE_URL = 'https://edabpftowxcyvsmuzzdf.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Estatísticas
-    async function carregarEstatisticas() {
-        try {
-            const [tapesRes, artistasRes, gravadorasRes, faixasRes] = await Promise.all([
-                supabaseClient.from('tapes').select('*', { count: 'exact', head: true }),
-                supabaseClient.from('artistas').select('*', { count: 'exact', head: true }),
-                supabaseClient.from('gravadoras').select('*', { count: 'exact', head: true }),
-                supabaseClient.from('faixas').select('*', { count: 'exact', head: true })
-            ]);
+async function carregarEstatisticas() {
+    const [tapes, artistas, gravadoras, faixas] = await Promise.all([
+        supabaseClient.from('tapes').select('*', { count: 'exact', head: true }),
+        supabaseClient.from('artistas').select('*', { count: 'exact', head: true }),
+        supabaseClient.from('gravadoras').select('*', { count: 'exact', head: true }),
+        supabaseClient.from('faixas').select('*', { count: 'exact', head: true })
+    ]);
 
-            document.getElementById('stat-tapes').textContent = tapesRes.count || 0;
-            document.getElementById('stat-artistas').textContent = artistasRes.count || 0;
-            document.getElementById('stat-gravadoras').textContent = gravadorasRes.count || 0;
-            document.getElementById('stat-faixas').textContent = faixasRes.count || 0;
+    document.getElementById('stat-tapes').textContent = tapes.count || 0;
+    document.getElementById('stat-artistas').textContent = artistas.count || 0;
+    document.getElementById('stat-gravadoras').textContent = gravadoras.count || 0;
+    document.getElementById('stat-faixas').textContent = faixas.count || 0;
+}
 
-        } catch (err) {
-            console.error('Erro ao carregar estatísticas:', err);
-        }
+async function carregarUltimosTapes() {
+    const { data } = await supabaseClient
+        .from('tapes')
+        .select(`id, titulo, artistas(nome)`)
+        .order('id', { ascending: false })
+        .limit(5);
+
+    const container = document.getElementById('previewTapes');
+
+    if (!data || data.length === 0) {
+        container.innerHTML = '<div class="text-slate-400 text-center py-6">Sem registros.</div>';
+        return;
     }
 
-    // Últimos 5 tapes
-    async function carregarUltimosTapes() {
-        try {
-            const { data, error } = await supabaseClient
-                .from('tapes')
-                .select(`
-                    id,
-                    titulo,
-                    numero_tape,
-                    artistas ( nome ),
-                    gravadoras ( nome )
-                `)
-                .order('id', { ascending: false })
-                .limit(5);
+    container.innerHTML = data.map(t => `
+        <div class="flex justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+            <div>
+                <div class="font-medium">${t.titulo}</div>
+                <div class="text-sm text-slate-500">${t.artistas?.nome || ''}</div>
+            </div>
+        </div>
+    `).join('');
+}
 
-            if (error) throw error;
+async function carregarGraficoTopArtistas() {
+    const { data } = await supabaseClient
+        .from('tapes')
+        .select('artista_id, artistas(nome)')
+        .not('artista_id', 'is', null);
 
-            const container = document.getElementById('previewTapes');
+    const contagem = {};
 
-            if (!data || data.length === 0) {
-                container.innerHTML = '<div class="text-slate-500 text-center py-4">Nenhum tape encontrado.</div>';
-                return;
+    data.forEach(item => {
+        const nome = item.artistas?.nome || 'Desconhecido';
+        contagem[nome] = (contagem[nome] || 0) + 1;
+    });
+
+    const ranking = Object.entries(contagem)
+        .sort((a,b) => b[1]-a[1])
+        .slice(0,5);
+
+    new Chart(document.getElementById('graficoTopArtistas'), {
+        type: 'bar',
+        data: {
+            labels: ranking.map(r => r[0]),
+            datasets: [{
+                label: 'Quantidade de Tapes',
+                data: ranking.map(r => r[1]),
+                backgroundColor: '#6366f1',
+                borderRadius: 8
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            plugins: { legend: { display: false }},
+            scales: {
+                x: { beginAtZero: true }
             }
-
-            container.innerHTML = data.map(tape => `
-                <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2 last:border-0">
-                    <div>
-                        <div class="font-medium">${tape.titulo || 'Sem título'}</div>
-                        <div class="text-xs text-slate-500">
-                            ${tape.artistas?.nome || 'Artista desconhecido'}
-                            ${tape.gravadoras?.nome ? ' • ' + tape.gravadoras.nome : ''}
-                        </div>
-                    </div>
-                    <a href="ver.html?id=${tape.id}" class="text-indigo-500 text-sm hover:underline">
-                        <i class="fas fa-arrow-right"></i>
-                    </a>
-                </div>
-            `).join('');
-
-        } catch (err) {
-            console.error(err);
         }
-    }
+    });
+}
 
-    // Top 5 artistas
-    async function carregarTopArtistas() {
-        try {
-            const { data, error } = await supabaseClient
-                .from('tapes')
-                .select('artista_id, artistas ( nome )')
-                .not('artista_id', 'is', null);
-
-            if (error) throw error;
-
-            const contagem = {};
-
-            data.forEach(item => {
-                const id = item.artista_id;
-                const nome = item.artistas?.nome || 'Desconhecido';
-
-                if (!contagem[id]) {
-                    contagem[id] = { nome, count: 0 };
-                }
-
-                contagem[id].count++;
-            });
-
-            const ranking = Object.values(contagem)
-                .sort((a, b) => b.count - a.count)
-                .slice(0, 5);
-
-            const container = document.getElementById('topArtistas');
-
-            if (ranking.length === 0) {
-                container.innerHTML = '<div class="text-slate-500 text-center py-4">Nenhum artista com tapes.</div>';
-                return;
-            }
-
-            container.innerHTML = ranking.map((item, idx) => `
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <span class="text-slate-400 text-sm">${idx + 1}.</span>
-                        <span class="font-medium">${item.nome}</span>
-                    </div>
-                    <span class="bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 text-xs px-2 py-1 rounded-full">
-                        ${item.count} tapes
-                    </span>
-                </div>
-            `).join('');
-
-        } catch (err) {
-            console.error(err);
-        }
-    }
-
-    (async () => {
-        await carregarEstatisticas();
-        await carregarUltimosTapes();
-        await carregarTopArtistas();
-    })();
+(async () => {
+    await carregarEstatisticas();
+    await carregarUltimosTapes();
+    await carregarGraficoTopArtistas();
+})();
 </script>
 
 </body>
