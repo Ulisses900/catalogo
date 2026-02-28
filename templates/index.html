@@ -1,449 +1,702 @@
-{% extends "base.html" %}
-
-{% block title %}Dashboard - Catálogo{% endblock %}
-
-{% block content %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes">
-
-<style>
-  /* Ajustes para toque e bottom nav */
-  .touch-target {
-    min-height: 44px;
-    min-width: 44px;
-  }
-  .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom, 80px);
-  }
-  .bottom-nav-shadow {
-    box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
-  }
-</style>
-
-<div class="min-h-screen bg-slate-50/50 pb-safe">
-  <!-- CABEÇALHO COM SAUDAÇÃO E ATUALIZAR -->
-  <div class="bg-gradient-to-r from-purple-600 to-indigo-700 px-4 pt-6 pb-4 rounded-b-2xl shadow-lg">
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-extrabold text-white tracking-tight">Dashboard</h1>
-        <p class="text-purple-100 text-sm mt-0.5">Visão geral do acervo</p>
-      </div>
-      <button onclick="carregarResumo(true)"
-              class="bg-white/10 hover:bg-white/20 text-white p-3 rounded-xl border border-white/20 touch-target">
-        <i class="fas fa-rotate text-lg"></i>
-      </button>
-    </div>
-
-    <!-- BARRA DE BUSCA E FILTRO (recolhível) -->
-    <div class="mt-4">
-      <div class="flex items-center gap-2">
-        <div class="relative flex-1">
-          <input type="text" id="termo" name="termo" placeholder="Buscar título, artista..."
-                 class="w-full bg-white/10 text-white placeholder-purple-200 border border-white/20 rounded-xl py-3 pl-10 pr-3 focus:outline-none focus:ring-2 focus:ring-white text-base">
-          <i class="fas fa-search absolute left-3 top-3.5 text-white/50"></i>
-        </div>
-        <button id="toggleFilterBtn" class="bg-white/10 hover:bg-white/20 text-white p-3 rounded-xl border border-white/20 touch-target">
-          <i class="fas fa-sliders-h text-lg"></i>
-        </button>
-      </div>
-
-      <!-- PAINEL DE FILTROS (inicialmente oculto) -->
-      <div id="filterPanel" class="mt-3 hidden">
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-xs font-bold mb-1 text-purple-100 uppercase tracking-wider">Tipo</label>
-            <select id="tipo_pesquisa" name="tipo_pesquisa"
-                    class="w-full bg-white/10 text-white border border-white/20 rounded-xl py-3 px-3 focus:outline-none focus:ring-2 focus:ring-white text-base">
-              <option value="titulo">Título</option>
-              <option value="artista">Artista</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-bold mb-1 text-purple-100 uppercase tracking-wider">Status</label>
-            <select id="filtro" name="filtro"
-                    class="w-full bg-white/10 text-white border border-white/20 rounded-xl py-3 px-3 focus:outline-none focus:ring-2 focus:ring-white text-base">
-              <option value="todos">Todos</option>
-              <option value="not_stream" selected>Off Stream</option>
-              <option value="on_stream">On Stream</option>
-              <option value="digitalizada">Digitalizada</option>
-              <option value="nao_pode_subir">Não pode subir</option>
-            </select>
-          </div>
-        </div>
-        <button id="applyFilterBtn" class="w-full mt-2 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-xl font-bold text-base">
-          <i class="fas fa-filter mr-2"></i> Aplicar filtros
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- CONTEÚDO PRINCIPAL (com padding inferior para bottom nav) -->
-  <div class="px-4 pt-4 pb-24">
-
-    <!-- KPIs em cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Total de Tapes</p>
-            <p class="text-3xl font-extrabold text-slate-900 mt-1" id="kpi-total">—</p>
-          </div>
-          <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-            <i class="fas fa-compact-disc text-xl"></i>
-          </div>
-        </div>
-      </div>
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">On Stream</p>
-            <p class="text-3xl font-extrabold text-emerald-600 mt-1" id="kpi-on-stream">—</p>
-          </div>
-          <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <i class="fas fa-cloud-upload-alt text-xl"></i>
-          </div>
-        </div>
-      </div>
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Digitalizados</p>
-            <p class="text-3xl font-extrabold text-sky-600 mt-1" id="kpi-digitalizada">—</p>
-          </div>
-          <div class="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
-            <i class="fas fa-file-audio text-xl"></i>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- GRÁFICOS (top artistas) -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-5">
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
-        <h2 class="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-3">
-          <i class="fas fa-user-music mr-2 text-indigo-500"></i> Top Artistas (tapes)
-        </h2>
-        <div id="chart-artistas" class="space-y-3">
-          <div class="animate-pulse space-y-3">
-            <div class="h-4 bg-slate-100 rounded w-3/4"></div>
-            <div class="h-4 bg-slate-100 rounded w-1/2"></div>
-          </div>
-        </div>
-      </div>
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
-        <h2 class="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-3">
-          <i class="fas fa-music mr-2 text-emerald-500"></i> Top Artistas (faixas)
-        </h2>
-        <div id="chart-artistas-faixas" class="space-y-3">
-          <div class="animate-pulse space-y-3">
-            <div class="h-4 bg-slate-100 rounded w-3/4"></div>
-            <div class="h-4 bg-slate-100 rounded w-1/2"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- LISTA DE TAPES EM CARDS -->
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-        <h2 class="text-xs font-extrabold uppercase tracking-widest text-slate-400">
-          <i class="fas fa-clock mr-2 text-indigo-500"></i> Tapes recentes
-        </h2>
-        <span class="text-xs bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full font-bold" id="preview-count">—</span>
-      </div>
-
-      <!-- Container dos cards -->
-      <div id="tapes-cards-container" class="divide-y divide-slate-50">
-        <div class="p-8 text-center text-slate-400">Carregando...</div>
-      </div>
-
-      <!-- Paginação compacta -->
-      <div class="px-5 py-4 bg-slate-50/30 border-t border-slate-100 flex items-center justify-between">
-        <button id="prev-btn" class="p-3 px-4 rounded-xl border border-slate-200 bg-white text-slate-600 font-bold hover:bg-slate-50 disabled:opacity-40 transition-all text-sm touch-target">
-          <i class="fas fa-chevron-left"></i>
-        </button>
-        <span class="text-sm text-slate-500">
-          Página <span id="current-page" class="font-bold text-slate-900">1</span> de <span id="total-pages" class="font-bold text-slate-900">1</span>
-        </span>
-        <button id="next-btn" class="p-3 px-4 rounded-xl border border-slate-200 bg-white text-slate-600 font-bold hover:bg-slate-50 disabled:opacity-40 transition-all text-sm touch-target">
-          <i class="fas fa-chevron-right"></i>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- BOTTOM NAVIGATION (fixa) -->
-  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center py-2 px-4 bottom-nav-shadow z-10">
-    <a href="{{ url_for('catalogo.index') }}" class="flex flex-col items-center text-indigo-600">
-      <i class="fas fa-chart-pie text-xl"></i>
-      <span class="text-[10px] font-bold mt-1">Dashboard</span>
-    </a>
-    <a href="{{ url_for('catalogo.tapes_list') }}" class="flex flex-col items-center text-slate-500">
-      <i class="fas fa-layer-group text-xl"></i>
-      <span class="text-[10px] font-bold mt-1">Catálogo</span>
-    </a>
-    <a href="#" class="flex flex-col items-center text-slate-500">
-      <i class="fas fa-file-alt text-xl"></i>
-      <span class="text-[10px] font-bold mt-1">Relatórios</span>
-    </a>
-  </nav>
-
-  <!-- FLOATING ACTION BUTTON (adicionar) -->
-  <a href="{{ url_for('catalogo.tapes_list') }}"
-     class="fixed bottom-20 right-4 bg-indigo-600 text-white p-4 rounded-full shadow-lg z-20 touch-target flex items-center justify-center">
-    <i class="fas fa-plus text-2xl"></i>
-  </a>
-
-</div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-  // URLs da API
-  const SEARCH_URL = "{{ url_for('catalogo.api_search_tapes') }}";
-  const STATS_URL = "{{ url_for('catalogo.dashboard_data') }}";
-  const TOP_FAIXAS_URL = "{{ url_for('catalogo.api_top_artistas_faixas') }}";
-  const VIEW_URL_TPL = "{{ url_for('catalogo.tapes_view', tape_id=0) }}";
-  const EDIT_URL_TPL = "{{ url_for('catalogo.tapes_edit', tape_id=0) }}";
-
-  // Elementos DOM
-  const cardsContainer = document.getElementById('tapes-cards-container');
-  const termoInput = document.getElementById('termo');
-  const tipoSelect = document.getElementById('tipo_pesquisa');
-  const filtroSelect = document.getElementById('filtro');
-  const toggleFilterBtn = document.getElementById('toggleFilterBtn');
-  const filterPanel = document.getElementById('filterPanel');
-  const applyFilterBtn = document.getElementById('applyFilterBtn');
-  const currentPageSpan = document.getElementById('current-page');
-  const totalPagesSpan = document.getElementById('total-pages');
-  const prevBtn = document.getElementById('prev-btn');
-  const nextBtn = document.getElementById('next-btn');
-
-  let currentPage = 1;
-  let totalPages = 1;
-
-  // Helpers
-  function setText(id, v) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = v;
-  }
-
-  function statusBadge(status) {
-    const map = {
-      'on_stream': { cls: 'bg-emerald-50 text-emerald-700 border-emerald-100', txt: 'On Stream' },
-      'digitalizada': { cls: 'bg-sky-50 text-sky-700 border-sky-100', txt: 'Digitalizada' },
-      'nao_pode_subir': { cls: 'bg-rose-50 text-rose-700 border-rose-100', txt: 'Não pode subir' },
-      'not_stream': { cls: 'bg-slate-100 text-slate-700 border-slate-200', txt: 'Off Stream' }
-    };
-    return map[status] || map['not_stream'];
-  }
-
-  function safeNome(v) {
-    if (!v) return '-';
-    return typeof v === 'string' ? v : (v.nome || '-');
-  }
-
-  // Renderização dos gráficos
-  function renderTopArtistas(top) {
-    const box = document.getElementById('chart-artistas');
-    if (!box) return;
-    if (!top || !top.length) {
-      box.innerHTML = `<div class="text-sm text-slate-400">Sem dados.</div>`;
-      return;
-    }
-    const max = Math.max(...top.map(x => x.qtd));
-    box.innerHTML = top.map(x => {
-      const pct = max ? Math.round((x.qtd / max) * 100) : 0;
-      return `
-        <div>
-          <div class="flex items-center justify-between text-sm font-bold text-slate-700">
-            <span class="truncate max-w-[70%]">${x.nome}</span>
-            <span class="text-indigo-600">${x.qtd} <span class="text-[10px] text-slate-400">TAPES</span></span>
-          </div>
-          <div class="w-full bg-slate-100 rounded-full h-2.5 mt-1.5 overflow-hidden">
-            <div class="h-full bg-indigo-500 rounded-full" style="width:${pct}%"></div>
-          </div>
-        </div>`;
-    }).join('');
-  }
-
-  function renderTopArtistasFaixas(top) {
-    const box = document.getElementById('chart-artistas-faixas');
-    if (!box) return;
-    if (!top || !top.length) {
-      box.innerHTML = `<div class="text-sm text-slate-400">Sem dados de faixas.</div>`;
-      return;
-    }
-    const max = Math.max(...top.map(x => x.qtd));
-    box.innerHTML = top.map(x => {
-      const pct = max ? Math.round((x.qtd / max) * 100) : 0;
-      return `
-        <div>
-          <div class="flex items-center justify-between text-sm font-bold text-slate-700">
-            <span class="truncate max-w-[70%]">${x.nome}</span>
-            <span class="text-emerald-600">${x.qtd} <span class="text-[10px] text-slate-400 uppercase">faixas</span></span>
-          </div>
-          <div class="w-full bg-slate-100 rounded-full h-2.5 mt-1.5 overflow-hidden">
-            <div class="h-full bg-emerald-500 rounded-full" style="width:${pct}%"></div>
-          </div>
-        </div>`;
-    }).join('');
-  }
-
-  // Carregamento dos dados de resumo (KPIs e gráficos)
-  async function carregarResumo() {
-    try {
-      // KPIs
-      const respStats = await fetch(STATS_URL);
-      if (respStats.ok) {
-        const json = await respStats.json();
-        if (json.ok && json.data && json.data.stats) {
-          const stats = json.data.stats;
-          setText('kpi-total', stats.total);
-          setText('kpi-on-stream', stats.on_stream);
-          setText('kpi-digitalizada', stats.digitalizada);
-        } else {
-          console.error('Resposta inválida do dashboard:', json);
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Catálogo Musical</title>
+    <style>
+        /* ===== RESET E VARIÁVEIS ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
-      }
 
-      // Top artistas por tapes (via search com muitos itens)
-      const respTapes = await fetch(`${SEARCH_URL}?limit=1000&filtro=todos`);
-      const jsonTapes = await respTapes.json();
-      if (jsonTapes.ok && jsonTapes.data && jsonTapes.data.tapes) {
-        const counts = new Map();
-        jsonTapes.data.tapes.forEach(t => {
-          const nome = (t.artista && t.artista.nome) ? t.artista.nome : 'SEM IDENTIFICAÇÃO';
-          counts.set(nome, (counts.get(nome) || 0) + 1);
+        body {
+            background-color: #f8fafc;
+            padding: 16px 16px 32px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* ===== TÍTULO ===== */
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+            border-left: 6px solid #3b82f6;
+            padding-left: 16px;
+        }
+
+        /* ===== CONTROLES (FILTROS) ===== */
+        .filters {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .search-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #334155;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            font-size: 1rem;
+            background-color: #fff;
+            transition: border 0.2s, box-shadow 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+        }
+
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 16px;
+        }
+
+        .row-dupla {
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .row-dupla > * {
+            flex: 1 1 150px;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            flex: 1 1 auto;
+            background-color: #3b82f6;
+            border: none;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding: 16px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: 1px solid transparent;
+            min-width: 140px;
+            touch-action: manipulation;
+        }
+
+        .btn:hover {
+            background-color: #2563eb;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background-color: #64748b;
+        }
+
+        .btn-secondary:hover {
+            background-color: #475569;
+        }
+
+        .result-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 16px 0 12px;
+            font-size: 1rem;
+            color: #1e293b;
+            font-weight: 500;
+            background: white;
+            padding: 12px 16px;
+            border-radius: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+
+        #contador {
+            background: #e2e8f0;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+        }
+
+        /* ===== CARDS (mobile first) ===== */
+        .cards-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.04);
+            border: 1px solid #f1f5f9;
+            transition: transform 0.1s;
+        }
+
+        .card:active {
+            transform: scale(0.99);
+        }
+
+        .card-titulo {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 6px;
+            line-height: 1.3;
+        }
+
+        .card-artista {
+            font-size: 1.1rem;
+            color: #3b82f6;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-artista::before {
+            content: "🎤";
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+
+        .card-detalhes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px 20px;
+            margin-top: 12px;
+            border-top: 1px dashed #e2e8f0;
+            padding-top: 16px;
+        }
+
+        .card-detalhe {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-detalhe-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #64748b;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .card-detalhe-valor {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        /* ===== TABELA (desktop) ===== */
+        .table-container {
+            display: none;
+            overflow-x: auto;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.04);
+            padding: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+            min-width: 700px;
+        }
+
+        th {
+            text-align: left;
+            padding: 18px 16px;
+            background-color: #f8fafc;
+            color: #334155;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #1e293b;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* ===== LOADING ===== */
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            background: white;
+            border-radius: 30px;
+            font-size: 1.2rem;
+            color: #64748b;
+            display: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .loading::after {
+            content: "⏳";
+            margin-left: 8px;
+            animation: piscar 1s infinite;
+        }
+
+        @keyframes piscar {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
+        .sem-resultados {
+            text-align: center;
+            padding: 40px 20px;
+            background: white;
+            border-radius: 30px;
+            color: #64748b;
+            font-size: 1.2rem;
+            border: 1px dashed #cbd5e1;
+        }
+
+        .hide {
+            display: none;
+        }
+
+        /* ===== MEDIA QUERY: DESKTOP (a partir de 900px) ===== */
+        @media (min-width: 900px) {
+            .cards-container {
+                display: none;
+            }
+
+            .table-container {
+                display: block;
+            }
+
+            .filters {
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-items: flex-end;
+            }
+
+            .search-group {
+                flex: 2 1 250px;
+            }
+
+            .row-dupla {
+                flex: 3 1 400px;
+            }
+
+            .button-group {
+                flex: 1 1 auto;
+                justify-content: flex-end;
+            }
+
+            .btn {
+                padding: 14px 24px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .row-dupla {
+                flex-direction: column;
+                gap: 16px;
+            }
+            .button-group {
+                flex-direction: column;
+            }
+        }
+
+        footer {
+            margin-top: 32px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Catálogo Musical</h1>
+
+        <!-- ÁREA DE FILTROS -->
+        <div class="filters">
+            <div class="search-group">
+                <label for="busca">Buscar (título/artista)</label>
+                <input type="text" id="busca" placeholder="Digite...">
+            </div>
+
+            <div class="row-dupla">
+                <div>
+                    <label for="genero">Gênero</label>
+                    <select id="genero">
+                        <option value="">Todos</option>
+                        <!-- Será preenchido via JS -->
+                    </select>
+                </div>
+                <div>
+                    <label for="limite">Limite</label>
+                    <select id="limite">
+                        <option value="50">50</option>
+                        <option value="100" selected>100</option>
+                        <option value="500">500</option>
+                        <option value="1000">1000</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn" id="btnBuscar">🔍 Buscar</button>
+                <button class="btn btn-secondary" id="btnExportar">📥 Exportar CSV</button>
+            </div>
+        </div>
+
+        <!-- INFO DE RESULTADOS -->
+        <div class="result-info">
+            <span id="resultadosTexto">Resultados</span>
+            <span id="contador">0</span>
+        </div>
+
+        <!-- INDICADOR DE LOADING -->
+        <div id="loading" class="loading">Carregando</div>
+
+        <!-- CARDS (mobile) -->
+        <div id="cardsContainer" class="cards-container"></div>
+
+        <!-- TABELA (desktop) -->
+        <div id="tableContainer" class="table-container">
+            <table id="tabela">
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Artista</th>
+                        <th>Ano</th>
+                        <th>Gravadora</th>
+                        <th>Gênero</th>
+                        <th>Formato</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaBody">
+                    <!-- preenchido via js -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- mensagem sem resultados -->
+        <div id="semResultados" class="sem-resultados hide">Nenhum resultado encontrado.</div>
+
+        <footer>
+            Dados de catálogo musical • consulta direta ao Supabase
+        </footer>
+    </div>
+
+    <!-- Supabase JS via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        // ==================== CONFIGURAÇÃO ====================
+        // 🔧 Dados do seu projeto Supabase (já preenchidos)
+        const SUPABASE_URL = 'https://edabpftowxcyvsmuzzdf.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_xUUhpgcgM7bc2Q5a02smMw_n5xDicbW';
+
+        // Inicializa o cliente Supabase
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ==================== ESTADO GLOBAL ====================
+        let ultimosDados = [];
+        let generosUnicos = [];
+
+        // Elementos DOM
+        const buscaInput = document.getElementById('busca');
+        const generoSelect = document.getElementById('genero');
+        const limiteSelect = document.getElementById('limite');
+        const btnBuscar = document.getElementById('btnBuscar');
+        const btnExportar = document.getElementById('btnExportar');
+        const cardsContainer = document.getElementById('cardsContainer');
+        const tabelaBody = document.getElementById('tabelaBody');
+        const loadingDiv = document.getElementById('loading');
+        const semResultadosDiv = document.getElementById('semResultados');
+        const contadorSpan = document.getElementById('contador');
+        const resultadosTexto = document.getElementById('resultadosTexto');
+
+        // ==================== FUNÇÕES AUXILIARES ====================
+        function mostrarLoading(mostrar) {
+            if (mostrar) {
+                loadingDiv.classList.add('active');
+                cardsContainer.innerHTML = '';
+                tabelaBody.innerHTML = '';
+                semResultadosDiv.classList.add('hide');
+            } else {
+                loadingDiv.classList.remove('active');
+            }
+        }
+
+        function atualizarContador(total) {
+            contadorSpan.textContent = total;
+            resultadosTexto.textContent = total === 1 ? '1 resultado' : total + ' resultados';
+        }
+
+        // ==================== BUSCAR DADOS (SUPABASE) ====================
+        async function buscarDados() {
+            const termo = buscaInput.value.trim();
+            const genero = generoSelect.value;
+            const limite = parseInt(limiteSelect.value, 10);
+
+            mostrarLoading(true);
+
+            try {
+                let query = supabase
+                    .from('tapes')
+                    .select('*')
+                    .order('ano', { ascending: false })
+                    .limit(limite);
+
+                if (genero) {
+                    query = query.eq('genero', genero);
+                }
+
+                if (termo !== '') {
+                    // busca por título ou artista (ilike)
+                    query = query.or(`titulo.ilike.%${termo}%,artista.ilike.%${termo}%`);
+                }
+
+                const { data, error } = await query;
+
+                if (error) {
+                    console.error('Erro na consulta:', error);
+                    alert('Erro ao buscar dados: ' + error.message);
+                    mostrarLoading(false);
+                    return;
+                }
+
+                ultimosDados = data || [];
+
+                const total = ultimosDados.length;
+                atualizarContador(total);
+
+                if (total === 0) {
+                    cardsContainer.innerHTML = '';
+                    tabelaBody.innerHTML = '';
+                    semResultadosDiv.classList.remove('hide');
+                } else {
+                    semResultadosDiv.classList.add('hide');
+                    renderCards(ultimosDados);
+                    renderTabela(ultimosDados);
+                }
+
+                // Popula gêneros se ainda não foi feito
+                if (generosUnicos.length === 0) {
+                    await carregarGeneros();
+                }
+
+            } catch (err) {
+                console.error('Erro inesperado:', err);
+                alert('Erro inesperado. Ver console.');
+            } finally {
+                mostrarLoading(false);
+            }
+        }
+
+        // ==================== RENDERIZAÇÃO CARDS ====================
+        function renderCards(dados) {
+            let html = '';
+            dados.forEach(item => {
+                html += `
+                    <div class="card">
+                        <div class="card-titulo">${escapeHTML(item.titulo) || '—'}</div>
+                        <div class="card-artista">${escapeHTML(item.artista) || '—'}</div>
+                        <div class="card-detalhes">
+                            <div class="card-detalhe">
+                                <span class="card-detalhe-label">Ano</span>
+                                <span class="card-detalhe-valor">${item.ano || '—'}</span>
+                            </div>
+                            <div class="card-detalhe">
+                                <span class="card-detalhe-label">Gravadora</span>
+                                <span class="card-detalhe-valor">${escapeHTML(item.gravadora) || '—'}</span>
+                            </div>
+                            <div class="card-detalhe">
+                                <span class="card-detalhe-label">Gênero</span>
+                                <span class="card-detalhe-valor">${escapeHTML(item.genero) || '—'}</span>
+                            </div>
+                            <div class="card-detalhe">
+                                <span class="card-detalhe-label">Formato</span>
+                                <span class="card-detalhe-valor">${escapeHTML(item.formato) || '—'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            cardsContainer.innerHTML = html;
+        }
+
+        // ==================== RENDERIZAÇÃO TABELA ====================
+        function renderTabela(dados) {
+            let linhas = '';
+            dados.forEach(item => {
+                linhas += `
+                    <tr>
+                        <td>${escapeHTML(item.titulo) || '—'}</td>
+                        <td>${escapeHTML(item.artista) || '—'}</td>
+                        <td>${item.ano || '—'}</td>
+                        <td>${escapeHTML(item.gravadora) || '—'}</td>
+                        <td>${escapeHTML(item.genero) || '—'}</td>
+                        <td>${escapeHTML(item.formato) || '—'}</td>
+                    </tr>
+                `;
+            });
+            tabelaBody.innerHTML = linhas;
+        }
+
+        // ==================== CARREGAR GÊNEROS PARA O SELECT ====================
+        async function carregarGeneros() {
+            try {
+                const { data, error } = await supabase
+                    .from('tapes')
+                    .select('genero')
+                    .not('genero', 'is', null);
+
+                if (error) {
+                    console.warn('Não foi possível carregar gêneros:', error);
+                    return;
+                }
+
+                const generos = [...new Set(data.map(item => item.genero).filter(g => g))].sort();
+
+                generosUnicos = generos;
+
+                let options = '<option value="">Todos</option>';
+                generos.forEach(g => {
+                    options += `<option value="${escapeHTML(g)}">${escapeHTML(g)}</option>`;
+                });
+                generoSelect.innerHTML = options;
+            } catch (e) {
+                console.warn('Erro ao carregar gêneros:', e);
+            }
+        }
+
+        // ==================== EXPORTAR CSV ====================
+        function exportarCSV() {
+            if (ultimosDados.length === 0) {
+                alert('Nenhum dado para exportar. Faça uma busca primeiro.');
+                return;
+            }
+
+            const cabecalho = ['id', 'titulo', 'artista', 'ano', 'gravadora', 'genero', 'formato'];
+
+            const linhas = ultimosDados.map(item => [
+                item.id,
+                item.titulo,
+                item.artista,
+                item.ano,
+                item.gravadora,
+                item.genero,
+                item.formato
+            ]);
+
+            const escapeCSV = (campo) => {
+                if (campo === null || campo === undefined) return '';
+                let str = String(campo);
+                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                    str = str.replace(/"/g, '""');
+                    return `"${str}"`;
+                }
+                return str;
+            };
+
+            const cabecalhoEscapado = cabecalho.map(escapeCSV).join(',');
+            const linhasEscapadas = linhas.map(linha => linha.map(escapeCSV).join(','));
+            const csvConteudo = [cabecalhoEscapado, ...linhasEscapadas].join('\n');
+
+            const blob = new Blob([csvConteudo], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            link.setAttribute('download', 'tapes.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // ==================== ESCAPAR HTML ====================
+        function escapeHTML(texto) {
+            if (!texto) return '';
+            return String(texto)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // ==================== EVENTOS ====================
+        btnBuscar.addEventListener('click', buscarDados);
+        btnExportar.addEventListener('click', exportarCSV);
+        buscaInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                buscarDados();
+            }
         });
-        const top = [...counts.entries()]
-          .map(([nome, qtd]) => ({ nome, qtd }))
-          .sort((a, b) => b.qtd - a.qtd)
-          .slice(0, 8);
-        renderTopArtistas(top);
-      } else {
-        console.error('Resposta inválida de search_tapes:', jsonTapes);
-      }
 
-      // Top artistas por faixas
-      const respFaixas = await fetch(TOP_FAIXAS_URL);
-      if (respFaixas.ok) {
-        const jsonFaixas = await respFaixas.json();
-        if (jsonFaixas.ok && jsonFaixas.data) {
-          renderTopArtistasFaixas(jsonFaixas.data);
-        } else {
-          console.error('Resposta inválida de top_artistas_faixas:', jsonFaixas);
-        }
-      }
-    } catch (err) {
-      console.error("Erro ao carregar dashboard:", err);
-    }
-  }
-
-  // Renderização dos cards (substitui a tabela)
-  function renderTapesCards(tapes) {
-    if (!tapes || tapes.length === 0) {
-      cardsContainer.innerHTML = `<div class="p-8 text-center text-slate-400">Nenhum tape encontrado.</div>`;
-      return;
-    }
-
-    let html = '';
-    tapes.forEach(t => {
-      const b = statusBadge(t.status);
-      const viewUrl = VIEW_URL_TPL.replace('/0/', `/${t.id}/`);
-      const editUrl = EDIT_URL_TPL.replace('/0/', `/${t.id}/`);
-      const numero = t.numero_tape || `#${t.id}`;
-
-      html += `
-        <div class="p-4 hover:bg-indigo-50/40 transition-colors">
-          <div class="flex items-start gap-3">
-            <div class="flex-1 min-w-0">
-              <h3 class="text-base font-bold text-slate-900 truncate">${t.titulo || '---'}</h3>
-              <p class="text-sm text-slate-600">${safeNome(t.artista)}</p>
-              <div class="flex items-center gap-2 mt-1">
-                <span class="text-xs text-slate-400">${numero}</span>
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${b.cls}">${b.txt}</span>
-              </div>
-            </div>
-            <div class="flex gap-1">
-              <a href="${viewUrl}" class="p-3 text-indigo-600 bg-indigo-50 rounded-full touch-target flex items-center justify-center">
-                <i class="fas fa-eye"></i>
-              </a>
-              <a href="${editUrl}" class="p-3 text-amber-600 bg-amber-50 rounded-full touch-target flex items-center justify-center">
-                <i class="fas fa-edit"></i>
-              </a>
-            </div>
-          </div>
-        </div>
-      `;
-    });
-    cardsContainer.innerHTML = html;
-  }
-
-  // Carregar página com busca e filtros
-  async function loadPage(page = 1) {
-    try {
-      const params = new URLSearchParams({
-        page: page,
-        limit: 10,
-        filtro: filtroSelect.value,
-        tipo_pesquisa: tipoSelect.value,
-        termo: termoInput.value
-      });
-
-      const resp = await fetch(`${SEARCH_URL}?${params.toString()}`);
-      const json = await resp.json();
-
-      if (json.ok && json.data) {
-        const data = json.data;
-        renderTapesCards(data.tapes || []);
-        currentPage = data.pagina_atual || 1;
-        totalPages = data.total_paginas || 1;
-        currentPageSpan.textContent = currentPage;
-        totalPagesSpan.textContent = totalPages;
-        prevBtn.disabled = currentPage <= 1;
-        nextBtn.disabled = currentPage >= totalPages;
-        setText('preview-count', `${data.total_registros || 0} itens`);
-      } else {
-        cardsContainer.innerHTML = `<div class="p-8 text-center text-rose-500 font-bold">Erro: ${json.error || 'Resposta inválida'}</div>`;
-      }
-    } catch (err) {
-      cardsContainer.innerHTML = `<div class="p-8 text-center text-rose-500 font-bold">Erro ao carregar dados.</div>`;
-      console.error(err);
-    }
-  }
-
-  // Event Listeners
-  document.addEventListener('DOMContentLoaded', () => {
-    carregarResumo();
-    loadPage(1);
-  });
-
-  // Toggle do painel de filtros
-  toggleFilterBtn.addEventListener('click', () => {
-    filterPanel.classList.toggle('hidden');
-  });
-
-  // Aplicar filtros
-  applyFilterBtn.addEventListener('click', () => {
-    filterPanel.classList.add('hidden');
-    loadPage(1);
-  });
-
-  // Busca ao digitar (Enter)
-  termoInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      loadPage(1);
-    }
-  });
-
-  // Paginação
-  prevBtn.addEventListener('click', () => {
-    if (currentPage > 1) loadPage(currentPage - 1);
-  });
-  nextBtn.addEventListener('click', () => {
-    if (currentPage < totalPages) loadPage(currentPage + 1);
-  });
-</script>
-{% endblock %}
+        // ==================== INICIALIZAÇÃO ====================
+        window.addEventListener('load', () => {
+            carregarGeneros();
+            buscarDados();
+        });
+    </script>
+</body>
+</html>
